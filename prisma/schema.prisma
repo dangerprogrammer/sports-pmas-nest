@@ -19,11 +19,11 @@ model User {
   updatedAt DateTime @updatedAt
 
   cpf      String  @unique
-  roles    Roles
+  roles    Roles[] @default([ALUNO])
   hash     String
   hashedRt String?
 
-  @@map("users")
+  @@map(name: "users")
 }
 
 enum Roles {

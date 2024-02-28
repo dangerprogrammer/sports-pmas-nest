@@ -8,4 +8,7 @@ export class AuthDto {
     @IsNotEmpty()
     @IsString()
     password: string;
+    
+    @IsNotEmpty()
+    roles: Array<'ALUNO' | 'PROFESSOR' | 'ADMIN'>;
 }

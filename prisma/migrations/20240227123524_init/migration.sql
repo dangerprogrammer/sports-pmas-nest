@@ -1,11 +1,5 @@
-/*
-  Warnings:
-
-  - You are about to drop the `User` table. If the table is not empty, all the data it contains will be lost.
-
-*/
--- DropTable
-DROP TABLE "User";
+-- CreateEnum
+CREATE TYPE "Roles" AS ENUM ('ALUNO', 'PROFESSOR', 'ADMIN');
 
 -- CreateTable
 CREATE TABLE "users" (
@@ -13,8 +7,12 @@ CREATE TABLE "users" (
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
     "cpf" TEXT NOT NULL,
+    "roles" "Roles"[],
     "hash" TEXT NOT NULL,
     "hashedRt" TEXT,
 
     CONSTRAINT "users_pkey" PRIMARY KEY ("id")
 );
+
+-- CreateIndex
+CREATE UNIQUE INDEX "users_cpf_key" ON "users"("cpf");

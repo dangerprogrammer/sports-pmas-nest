@@ -12,16 +12,16 @@ export class AuthService {
         private jwtService: JwtService
     ) {}
 
-    async signupLocal({ password, cpf }: AuthDto): Promise<Tokens> {
-        const hash = await this.hashData(password);
+    async signupLocal({ password, cpf, roles }: AuthDto): Promise<Tokens> {
+        const hash = await this.hashData(password), splitRoles = (roles as unknown as string).split(',');
 
         const newUser = await this.prisma.user.create({
-            data: { cpf, roles: 'ALUNO', hash }
+            data: { cpf, roles: splitRoles as typeof roles, hash }
         });
 
         const tokens = await this.getTokens(newUser.id, newUser.cpf);
 
-        await this.updateRtHash(newUser.id, tokens.refresh_token)
+        await this.updateRtHash(newUser.id, tokens.refresh_token);
 
         return tokens;
     }
@@ -39,7 +39,7 @@ export class AuthService {
 
         const tokens = await this.getTokens(user.id, user.cpf);
 
-        await this.updateRtHash(user.id, tokens.refresh_token)
+        await this.updateRtHash(user.id, tokens.refresh_token);
 
         return tokens;
     }
@@ -73,7 +73,7 @@ export class AuthService {
 
         const tokens = await this.getTokens(user.id, user.cpf);
 
-        await this.updateRtHash(user.id, tokens.refresh_token)
+        await this.updateRtHash(user.id, tokens.refresh_token);
 
         return tokens;
     }
@@ -98,15 +98,13 @@ export class AuthService {
     async getTokens(userId: number, cpf: string) {
         const [at, rt] = await Promise.all([
             this.jwtService.signAsync({
-                sub: userId,
-                cpf
+                sub: userId, cpf
             }, {
                 secret: 'at-secret',
                 expiresIn: 60 * 15,
             }),
             this.jwtService.signAsync({
-                sub: userId,
-                cpf
+                sub: userId, cpf
             }, {
                 secret: 'rt-secret',
                 expiresIn: 60 * 60 * 24 * 90,
