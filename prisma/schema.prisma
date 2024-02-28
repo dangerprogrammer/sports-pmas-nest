@@ -18,12 +18,70 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  cpf      String  @unique
-  roles    Roles[] @default([ALUNO])
+  cpf   String  @unique
+  roles Roles[] @default([ALUNO])
+
+  aluno     Aluno?     @relation("aluno")
+  professor Professor? @relation("professor")
+  admin     Admin?     @relation("admin")
+
   hash     String
   hashedRt String?
 
-  @@map(name: "users")
+  @@unique([id, cpf])
+  @@map("users")
+}
+
+model Aluno {
+  id   Int   @id
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user User? @relation("aluno", fields: [id, cpf], references: [id, cpf])
+
+  nome_comp String
+  cpf       String
+  email     String
+  tel       String
+  endereco  String
+  bairro    String
+  data_nasc DateTime
+  sexo      Gender
+  inscricao Inscricao
+  periodo   Periodo
+
+  @@unique([id, cpf])
+  @@map("alunos")
+}
+
+model Professor {
+  id   Int   @id
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user User? @relation("professor", fields: [id], references: [id])
+}
+
+model Admin {
+  id   Int   @id
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user User? @relation("admin", fields: [id], references: [id])
+}
+
+enum Periodo {
+  MANHA
+  TARDE
+  NOITE
+}
+
+enum Inscricao {
+  NATACAO
+  HIDRO
+}
+
+enum Gender {
+  FEMININO
+  MASCULINO
+  OUTRO
 }
 
 enum Roles {

@@ -4,10 +4,14 @@ export class AuthDto {
     @IsNotEmpty()
     @IsString()
     cpf: string;
-    
+
     @IsNotEmpty()
     @IsString()
     password: string;
-    
-    roles: Array<'ALUNO' | 'PROFESSOR' | 'ADMIN'>;
+
+    aluno?: string;
+    professor?: string;
+    admin?: string;
+
+    roles?: Array<'ALUNO' | 'PROFESSOR' | 'ADMIN'>;
 }

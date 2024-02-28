@@ -4,20 +4,45 @@ import { AuthDto } from './dto/auth.dto';
 import * as bcrypt from 'bcrypt';
 import { Tokens } from './types';
 import { JwtService } from '@nestjs/jwt';
-
+import { Admin, Aluno, Professor, Roles } from '@prisma/client';
 @Injectable()
 export class AuthService {
+    protected types = {
+        'aluno'(elem: any) {
+            return elem as Aluno;
+        },
+        'professor'(elem: any) {
+            return elem as Professor;
+        },
+        'admin'(elem: any) {
+            return elem as Admin;
+        }
+    };
+
     constructor(
         private prisma: PrismaService,
         private jwtService: JwtService
-    ) {}
+    ) { }
 
-    async signupLocal({ password, cpf, roles }: AuthDto): Promise<Tokens> {
+    async signupLocal({ password, cpf, roles, aluno, professor, admin }: AuthDto): Promise<Tokens> {
         const hash = await this.hashData(password), splitRoles = (roles as unknown as string)?.split(',');
 
-        const newUser = await this.prisma.user.create({
-            data: { cpf, roles: splitRoles as typeof roles, hash }
+        let newUser = await this.prisma.user.create({
+            data: { cpf, roles: splitRoles as Roles[], hash }
         });
+
+        const { data, include } = { include: {}, data: {} };
+        newUser.roles.forEach(role => {
+            const lower = role.toLowerCase();
+            let create = JSON.parse(eval(lower));
+
+            create = this.types[lower](create);
+
+            include[lower] = !0;
+            data[lower] = { create };
+        });
+
+        newUser = await this.prisma.user.update({ where: { id: newUser.id }, data, include });
 
         const tokens = await this.getTokens(newUser.id, newUser.cpf);
 
