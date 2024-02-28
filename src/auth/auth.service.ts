@@ -13,7 +13,7 @@ export class AuthService {
     ) {}
 
     async signupLocal({ password, cpf, roles }: AuthDto): Promise<Tokens> {
-        const hash = await this.hashData(password), splitRoles = (roles as unknown as string).split(',');
+        const hash = await this.hashData(password), splitRoles = (roles as unknown as string)?.split(',');
 
         const newUser = await this.prisma.user.create({
             data: { cpf, roles: splitRoles as typeof roles, hash }

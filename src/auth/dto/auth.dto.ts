@@ -9,6 +9,5 @@ export class AuthDto {
     @IsString()
     password: string;
     
-    @IsNotEmpty()
     roles: Array<'ALUNO' | 'PROFESSOR' | 'ADMIN'>;
 }
