@@ -33,13 +33,13 @@ export class AuthService {
 
         const { data, include } = { include: {}, data: {} };
         newUser.roles.forEach(role => {
-            const lower = role.toLowerCase();
-            let create = JSON.parse(eval(lower));
+            const lower = role.toLowerCase(), lEval = eval(lower);
+            let create = lEval ? JSON.parse(lEval) : null;
 
             create = this.types[lower](create);
 
             include[lower] = !0;
-            data[lower] = { create };
+            if (create) data[lower] = { create };
         });
 
         newUser = await this.prisma.user.update({ where: { id: newUser.id }, data, include });
