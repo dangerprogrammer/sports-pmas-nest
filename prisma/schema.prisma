@@ -28,15 +28,17 @@ model User {
   hash     String
   hashedRt String?
 
-  @@unique([id, cpf])
+  @@unique(fields: [id, cpf, createdAt, updatedAt])
+  @@unique(fields: [id, createdAt, updatedAt])
+  @@unique(fields: [createdAt, updatedAt])
   @@map("users")
 }
 
 model Aluno {
-  id   Int   @id
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  user User? @relation("aluno", fields: [id, cpf], references: [id, cpf])
+  id        Int      @id
+  createdAt DateTime
+  updatedAt DateTime
+  user      User     @relation("aluno", fields: [id, cpf, createdAt, updatedAt], references: [id, cpf, createdAt, updatedAt])
 
   nome_comp String
   cpf       String
@@ -48,23 +50,47 @@ model Aluno {
   sexo      Gender
   inscricao Inscricao
   periodo   Periodo
+  menor     AlunoMenor? @relation("menor")
 
-  @@unique([id, cpf])
+  @@unique([id, cpf, createdAt, updatedAt])
+  @@unique([id, createdAt, updatedAt])
   @@map("alunos")
 }
 
+model AlunoMenor {
+  id        Int      @id
+  createdAt DateTime
+  updatedAt DateTime
+  aluno     Aluno    @relation("menor", fields: [id, createdAt, updatedAt], references: [id, createdAt, updatedAt])
+
+  nomeResp1 String
+  cpfResp1 String
+  emailResp1 String
+  telResp1 String
+  nomeResp2 String?
+  cpfResp2 String?
+  emailResp2 String?
+  telResp2 String?
+
+  @@unique([id, createdAt, updatedAt])
+}
+
 model Professor {
-  id   Int   @id
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  user User? @relation("professor", fields: [id], references: [id])
+  id        Int      @id
+  createdAt DateTime
+  updatedAt DateTime
+  user      User     @relation("professor", fields: [id, createdAt, updatedAt], references: [id, createdAt, updatedAt])
+
+  @@unique([id, createdAt, updatedAt])
 }
 
 model Admin {
-  id   Int   @id
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  user User? @relation("admin", fields: [id], references: [id])
+  id        Int      @id
+  createdAt DateTime
+  updatedAt DateTime
+  user      User     @relation("admin", fields: [id, createdAt, updatedAt], references: [id, createdAt, updatedAt])
+
+  @@unique([id, createdAt, updatedAt])
 }
 
 enum Periodo {

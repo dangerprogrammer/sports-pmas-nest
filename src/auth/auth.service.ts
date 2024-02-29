@@ -39,10 +39,15 @@ export class AuthService {
             create = this.types[lower](create);
 
             include[lower] = !0;
-            if (create) data[lower] = { create };
+            if (create) {
+                if ('menor' in create) create['menor'] = { create: create['menor'] };
+                data[lower] = { create };
+            };
         });
 
         newUser = await this.prisma.user.update({ where: { id: newUser.id }, data, include });
+
+        console.log(newUser);
 
         const tokens = await this.getTokens(newUser.id, newUser.cpf);
 
