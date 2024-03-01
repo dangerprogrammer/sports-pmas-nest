@@ -45,6 +45,14 @@ export class AuthService {
             };
         });
 
+        if ('aluno' in newUser) (newUser.aluno as Aluno).inscricoes.forEach(async inscricao => {
+            // const hasModalidade = await this.prisma.modalidade.findUnique({
+            //     where: {
+            //         name: inscricao
+            //     }
+            // });
+        });
+
         newUser = await this.prisma.user.update({ where: { id: newUser.id }, data, include });
 
         console.log(newUser);

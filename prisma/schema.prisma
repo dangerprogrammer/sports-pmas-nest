@@ -40,21 +40,35 @@ model Aluno {
   updatedAt DateTime
   user      User     @relation("aluno", fields: [id, cpf, createdAt, updatedAt], references: [id, cpf, createdAt, updatedAt])
 
-  nome_comp String
-  cpf       String
-  email     String
-  tel       String
-  endereco  String
-  bairro    String
-  data_nasc DateTime
-  sexo      Gender
-  inscricao Inscricao
-  periodo   Periodo
-  menor     AlunoMenor? @relation("menor")
+  nome_comp  String
+  cpf        String
+  email      String
+  tel        String
+  endereco   String
+  bairro     String
+  data_nasc  DateTime
+  sexo       Gender
+  inscricoes Inscricao[]
+  periodos   Periodo[]
+  atestados  Atestado[]  @relation("atestados")
+  menor      AlunoMenor? @relation("menor")
 
   @@unique([id, cpf, createdAt, updatedAt])
   @@unique([id, createdAt, updatedAt])
   @@map("alunos")
+}
+
+model Atestado {
+  id        Int      @id
+  createdAt DateTime
+  updatedAt DateTime
+  aluno     Aluno    @relation("atestados", fields: [id, createdAt, updatedAt], references: [id, createdAt, updatedAt])
+
+  anexo String
+  msg   String?
+
+  @@unique([id, createdAt, updatedAt])
+  @@map("atestados")
 }
 
 model AlunoMenor {
@@ -63,16 +77,18 @@ model AlunoMenor {
   updatedAt DateTime
   aluno     Aluno    @relation("menor", fields: [id, createdAt, updatedAt], references: [id, createdAt, updatedAt])
 
-  nomeResp1 String
-  cpfResp1 String
+  nomeResp1  String
+  cpfResp1   String
   emailResp1 String
-  telResp1 String
-  nomeResp2 String?
-  cpfResp2 String?
+  telResp1   String
+
+  nomeResp2  String?
+  cpfResp2   String?
   emailResp2 String?
-  telResp2 String?
+  telResp2   String?
 
   @@unique([id, createdAt, updatedAt])
+  @@map("aluno_menors")
 }
 
 model Professor {
@@ -82,6 +98,7 @@ model Professor {
   user      User     @relation("professor", fields: [id, createdAt, updatedAt], references: [id, createdAt, updatedAt])
 
   @@unique([id, createdAt, updatedAt])
+  @@map("professors")
 }
 
 model Admin {
@@ -91,6 +108,29 @@ model Admin {
   user      User     @relation("admin", fields: [id, createdAt, updatedAt], references: [id, createdAt, updatedAt])
 
   @@unique([id, createdAt, updatedAt])
+  @@map("admins")
+}
+
+model Modalidade {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  name  String
+  vagas Int?   @default(15)
+
+  @@map("modalidades")
+}
+
+model Localidade {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  endereco String
+  bairro   String
+
+  @@map("localidades")
 }
 
 enum Periodo {

@@ -1,4 +1,5 @@
 import { IsNotEmpty, IsString } from "class-validator";
+import { Admin, Aluno, Professor, Roles } from "../types";
 
 export class AuthDto {
     @IsNotEmpty()
@@ -9,9 +10,9 @@ export class AuthDto {
     @IsString()
     password: string;
 
-    aluno?: string;
-    professor?: string;
-    admin?: string;
+    aluno?: Aluno | string;
+    professor?: Professor | string;
+    admin?: Admin | string;
 
-    roles?: Array<'ALUNO' | 'PROFESSOR' | 'ADMIN'>;
+    roles?: Roles[];
 }
