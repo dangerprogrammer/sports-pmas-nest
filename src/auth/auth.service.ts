@@ -100,7 +100,9 @@ export class AuthService {
         return tokens;
     }
 
-    async createLocal({}) {}
+    async createLocal({ endereco, bairro }) {
+        console.log(endereco, bairro);
+    }
 
     async refreshModalidade(aluno: Aluno) {
         aluno.inscricoes.forEach(async (inscricao, ind) => {
