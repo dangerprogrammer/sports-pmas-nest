@@ -91,6 +91,7 @@ export type Admin_Prisma = Admin & {
 
 export type Modalidade = {
     name: string;
+    periodo: Periodo;
     alunos: Aluno[];
     vagas: number;
 }

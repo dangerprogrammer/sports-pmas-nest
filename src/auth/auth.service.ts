@@ -2,9 +2,9 @@ import { ForbiddenException, Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { AuthDto } from './dto/auth.dto';
 import * as bcrypt from 'bcrypt';
-import { Modalidade_Prisma, Tokens } from './types';
+import { Tokens } from './types';
 import { JwtService } from '@nestjs/jwt';
-import { Admin, Aluno, Professor, Roles, Modalidade } from '@prisma/client';
+import { Admin, Aluno, Professor, Roles } from '@prisma/client';
 @Injectable()
 export class AuthService {
     protected types = {
@@ -24,7 +24,7 @@ export class AuthService {
         private jwtService: JwtService
     ) { }
 
-    // EXAMPLE JSON ALUNO:
+    // EXAMPLE JSON ALUNO MENOR:
     // {"nome_comp":"Patrick Vieira Léo","email":"papatrileo@gmail.com","tel":"15981004777","endereco":"Avenida Itália","bairro":"Monte Bianco","data_nasc":"2004-12-10T02:00:00.000Z","sexo":"MASCULINO","inscricoes":["NATACAO"],"periodos":["TARDE"],"menor":{"nomeResp1":"Wellington Alexandre Léo","cpfResp1":"12558186892","emailResp1":"wellnapa009@gmail.com","telResp1":"15981811333"}}
     async signupLocal({ password, cpf, roles, aluno, professor, admin }: AuthDto): Promise<Tokens> {
         const hash = await this.hashData(password), splitRoles = (roles as unknown as string)?.split(',');
@@ -35,8 +35,8 @@ export class AuthService {
 
         const { data, include } = { include: {}, data: {} };
         newUser.roles.forEach(role => {
-            const lower = role.toLowerCase(), lEval = eval(lower);
-            let create = lEval ? JSON.parse(lEval) : null;
+            const lower = role.toLowerCase();
+            let create = eval(lower);
 
             create = this.types[lower](create);
 
@@ -49,20 +49,23 @@ export class AuthService {
 
         newUser = await this.prisma.user.update({ where: { id: newUser.id }, data, include });
 
-        if ('aluno' in newUser) (newUser.aluno as Aluno).inscricoes.forEach(async inscricao => {
-            const hasModalidade = (await this.prisma.modalidade.findMany()).find(({ name }) => name == inscricao);
-            const alunosInscritos = (await this.prisma.aluno.findMany())
-                .filter(({ inscricoes }) => inscricoes.find(insc => insc == inscricao))
-                .map(({ id }) => { return { id } });
+        if ('aluno' in newUser) {
+            const aluno = (newUser.aluno as Aluno);
 
-            if (!hasModalidade) await this.prisma.modalidade.create({
-                data: { name: inscricao, alunos: { connect: alunosInscritos } }
+            aluno.inscricoes.forEach(async (inscricao, ind) => {
+                const hasModalidade = await this.prisma.modalidade.findFirst({ where: { name: inscricao } });
+                const alunosInscritos = (await this.prisma.aluno.findMany({ where: { inscricoes: { has: inscricao } } }))
+                    .map(({ id }) => { return { id } });
+                const alunos = { connect: alunosInscritos };
+
+                if (!hasModalidade) await this.prisma.modalidade.create({ data: { name: inscricao, periodo: aluno.periodos[ind] || aluno.periodos[0] } });
+
+                await this.prisma.modalidade.update({
+                    where: { id: (hasModalidade || await this.prisma.modalidade.findFirst({ where: { name: inscricao } })).id },
+                    data: { alunos }
+                });
             });
-            else await this.prisma.modalidade.update({
-                where: { id: hasModalidade.id },
-                data: { alunos: { connect: alunosInscritos } }
-            });
-        });
+        };
 
         const tokens = await this.getTokens(newUser.id, newUser.cpf);
 

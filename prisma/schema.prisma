@@ -119,6 +119,7 @@ model Modalidade {
   updatedAt DateTime @updatedAt
 
   name   String
+  periodo Periodo @default(NOITE)
   alunos Aluno[] @relation("aluno_modalidade")
   vagas  Int?    @default(15)
 

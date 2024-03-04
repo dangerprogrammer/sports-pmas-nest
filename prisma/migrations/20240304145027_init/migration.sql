@@ -94,6 +94,7 @@ CREATE TABLE "modalidades" (
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
     "name" TEXT NOT NULL,
+    "periodo" "Periodo" NOT NULL DEFAULT 'NOITE',
     "vagas" INTEGER DEFAULT 15,
 
     CONSTRAINT "modalidades_pkey" PRIMARY KEY ("id")
