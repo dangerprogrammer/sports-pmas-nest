@@ -40,6 +40,8 @@ model Aluno {
   updatedAt DateTime
   user      User     @relation("aluno", fields: [id, cpf, createdAt, updatedAt], references: [id, cpf, createdAt, updatedAt])
 
+  modalidades Modalidade[] @relation("aluno_modalidade")
+
   nome_comp  String
   cpf        String
   email      String
@@ -116,8 +118,9 @@ model Modalidade {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  name  String
-  vagas Int?   @default(15)
+  name   String
+  alunos Aluno[] @relation("aluno_modalidade")
+  vagas  Int?    @default(15)
 
   @@map("modalidades")
 }

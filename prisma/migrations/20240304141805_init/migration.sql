@@ -110,6 +110,12 @@ CREATE TABLE "localidades" (
     CONSTRAINT "localidades_pkey" PRIMARY KEY ("id")
 );
 
+-- CreateTable
+CREATE TABLE "_aluno_modalidade" (
+    "A" INTEGER NOT NULL,
+    "B" INTEGER NOT NULL
+);
+
 -- CreateIndex
 CREATE UNIQUE INDEX "users_cpf_key" ON "users"("cpf");
 
@@ -140,6 +146,12 @@ CREATE UNIQUE INDEX "professors_id_createdAt_updatedAt_key" ON "professors"("id"
 -- CreateIndex
 CREATE UNIQUE INDEX "admins_id_createdAt_updatedAt_key" ON "admins"("id", "createdAt", "updatedAt");
 
+-- CreateIndex
+CREATE UNIQUE INDEX "_aluno_modalidade_AB_unique" ON "_aluno_modalidade"("A", "B");
+
+-- CreateIndex
+CREATE INDEX "_aluno_modalidade_B_index" ON "_aluno_modalidade"("B");
+
 -- AddForeignKey
 ALTER TABLE "alunos" ADD CONSTRAINT "alunos_id_cpf_createdAt_updatedAt_fkey" FOREIGN KEY ("id", "cpf", "createdAt", "updatedAt") REFERENCES "users"("id", "cpf", "createdAt", "updatedAt") ON DELETE RESTRICT ON UPDATE CASCADE;
 
@@ -154,3 +166,9 @@ ALTER TABLE "professors" ADD CONSTRAINT "professors_id_createdAt_updatedAt_fkey"
 
 -- AddForeignKey
 ALTER TABLE "admins" ADD CONSTRAINT "admins_id_createdAt_updatedAt_fkey" FOREIGN KEY ("id", "createdAt", "updatedAt") REFERENCES "users"("id", "createdAt", "updatedAt") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "_aluno_modalidade" ADD CONSTRAINT "_aluno_modalidade_A_fkey" FOREIGN KEY ("A") REFERENCES "alunos"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "_aluno_modalidade" ADD CONSTRAINT "_aluno_modalidade_B_fkey" FOREIGN KEY ("B") REFERENCES "modalidades"("id") ON DELETE CASCADE ON UPDATE CASCADE;
