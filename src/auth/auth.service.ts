@@ -4,7 +4,7 @@ import { AuthDto } from './dto/auth.dto';
 import * as bcrypt from 'bcrypt';
 import { Tokens } from './types';
 import { JwtService } from '@nestjs/jwt';
-import { Admin, Aluno, Professor, Roles } from '@prisma/client';
+import { Admin, Aluno, Professor, Roles, User } from '@prisma/client';
 @Injectable()
 export class AuthService {
     protected types = {
@@ -33,38 +33,12 @@ export class AuthService {
             data: { cpf, roles: splitRoles as Roles[], hash }
         });
 
-        const { data, include } = { include: {}, data: {} };
-        newUser.roles.forEach(role => {
-            const lower = role.toLowerCase();
-            let create = eval(lower);
+        newUser = await this.updateUserRoles(newUser);
 
-            create = this.types[lower](create);
+        if ('aluno' in newUser) await this.refreshModalidade(newUser.aluno as Aluno);
 
-            include[lower] = !0;
-            if (create) {
-                if ('menor' in create) create['menor'] = { create: create['menor'] };
-                data[lower] = { create };
-            };
-        });
-
-        newUser = await this.prisma.user.update({ where: { id: newUser.id }, data, include });
-
-        if ('aluno' in newUser) {
-            const aluno = (newUser.aluno as Aluno);
-
-            aluno.inscricoes.forEach(async (inscricao, ind) => {
-                const hasModalidade = await this.prisma.modalidade.findFirst({ where: { name: inscricao } });
-                const alunosInscritos = (await this.prisma.aluno.findMany({ where: { inscricoes: { has: inscricao } } }))
-                    .map(({ id }) => { return { id } });
-                const alunos = { connect: alunosInscritos };
-
-                if (!hasModalidade) await this.prisma.modalidade.create({ data: { name: inscricao, periodo: aluno.periodos[ind] || aluno.periodos[0] } });
-
-                await this.prisma.modalidade.update({
-                    where: { id: (hasModalidade || await this.prisma.modalidade.findFirst({ where: { name: inscricao } })).id },
-                    data: { alunos }
-                });
-            });
+        if ('admin' in newUser) {
+            // Criar localidades
         };
 
         const tokens = await this.getTokens(newUser.id, newUser.cpf);
@@ -72,6 +46,22 @@ export class AuthService {
         await this.updateRtHash(newUser.id, tokens.refresh_token);
 
         return tokens;
+    }
+
+    async refreshModalidade(aluno: Aluno) {
+        aluno.inscricoes.forEach(async (inscricao, ind) => {
+            const hasModalidade = await this.prisma.modalidade.findFirst({ where: { name: inscricao } });
+            const alunosInscritos = (await this.prisma.aluno.findMany({ where: { inscricoes: { has: inscricao } } }))
+                .map(({ id }) => { return { id } });
+            const alunos = { connect: alunosInscritos };
+
+            if (!hasModalidade) await this.prisma.modalidade.create({ data: { name: inscricao, periodo: aluno.periodos[ind] || aluno.periodos[0] } });
+
+            await this.prisma.modalidade.update({
+                where: { id: (hasModalidade || await this.prisma.modalidade.findFirst({ where: { name: inscricao } })).id },
+                data: { alunos }
+            });
+        });
     }
 
     async signinLocal({ password, cpf }: AuthDto): Promise<Tokens> {
@@ -124,6 +114,24 @@ export class AuthService {
         await this.updateRtHash(user.id, tokens.refresh_token);
 
         return tokens;
+    }
+
+    async updateUserRoles(user: User) {
+        const { data, include } = { include: {}, data: {} };
+        user.roles.forEach(role => {
+            const lower = role.toLowerCase();
+            let create = eval(lower);
+
+            create = this.types[lower](create);
+
+            include[lower] = !0;
+            if (create) {
+                if ('menor' in create) create['menor'] = { create: create['menor'] };
+                data[lower] = { create };
+            };
+        });
+
+        return await this.prisma.user.update({ where: { id: user.id }, data, include });
     }
 
     async updateRtHash(userId: number, rt: string) {
