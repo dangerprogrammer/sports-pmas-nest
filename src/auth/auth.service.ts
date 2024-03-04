@@ -48,22 +48,6 @@ export class AuthService {
         return tokens;
     }
 
-    async refreshModalidade(aluno: Aluno) {
-        aluno.inscricoes.forEach(async (inscricao, ind) => {
-            const hasModalidade = await this.prisma.modalidade.findFirst({ where: { name: inscricao } });
-            const alunosInscritos = (await this.prisma.aluno.findMany({ where: { inscricoes: { has: inscricao } } }))
-                .map(({ id }) => { return { id } });
-            const alunos = { connect: alunosInscritos };
-
-            if (!hasModalidade) await this.prisma.modalidade.create({ data: { name: inscricao, periodo: aluno.periodos[ind] || aluno.periodos[0] } });
-
-            await this.prisma.modalidade.update({
-                where: { id: (hasModalidade || await this.prisma.modalidade.findFirst({ where: { name: inscricao } })).id },
-                data: { alunos }
-            });
-        });
-    }
-
     async signinLocal({ password, cpf }: AuthDto): Promise<Tokens> {
         const user = await this.prisma.user.findUnique({
             where: { cpf }
@@ -114,6 +98,24 @@ export class AuthService {
         await this.updateRtHash(user.id, tokens.refresh_token);
 
         return tokens;
+    }
+
+    async createLocal({}) {}
+
+    async refreshModalidade(aluno: Aluno) {
+        aluno.inscricoes.forEach(async (inscricao, ind) => {
+            const hasModalidade = await this.prisma.modalidade.findFirst({ where: { name: inscricao } });
+            const alunosInscritos = (await this.prisma.aluno.findMany({ where: { inscricoes: { has: inscricao } } }))
+                .map(({ id }) => { return { id } });
+            const alunos = { connect: alunosInscritos };
+
+            if (!hasModalidade) await this.prisma.modalidade.create({ data: { name: inscricao, periodo: aluno.periodos[ind] || aluno.periodos[0] } });
+
+            await this.prisma.modalidade.update({
+                where: { id: (hasModalidade || await this.prisma.modalidade.findFirst({ where: { name: inscricao } })).id },
+                data: { alunos }
+            });
+        });
     }
 
     async updateUserRoles(user: User) {
