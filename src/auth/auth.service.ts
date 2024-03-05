@@ -5,6 +5,9 @@ import * as bcrypt from 'bcrypt';
 import { Tokens } from './types';
 import { JwtService } from '@nestjs/jwt';
 import { Admin, Aluno, Professor, Roles, User } from '@prisma/client';
+import { LocalDto } from './dto/local.dto';
+import { ModalidadeDto } from './dto/modalidade.dto';
+
 @Injectable()
 export class AuthService {
     protected types = {
@@ -24,22 +27,16 @@ export class AuthService {
         private jwtService: JwtService
     ) { }
 
-    // EXAMPLE JSON ALUNO MENOR:
-    // {"nome_comp":"Patrick Vieira Léo","email":"papatrileo@gmail.com","tel":"15981004777","endereco":"Avenida Itália","bairro":"Monte Bianco","data_nasc":"2004-12-10T02:00:00.000Z","sexo":"MASCULINO","inscricoes":["NATACAO"],"periodos":["TARDE"],"menor":{"nomeResp1":"Wellington Alexandre Léo","cpfResp1":"12558186892","emailResp1":"wellnapa009@gmail.com","telResp1":"15981811333"}}
     async signupLocal({ password, cpf, roles, aluno, professor, admin }: AuthDto): Promise<Tokens> {
-        const hash = await this.hashData(password), splitRoles = (roles as unknown as string)?.split(',');
+        const hash = await this.hashData(password), splitRoles = roles || (roles as unknown as string)?.split(',');
 
         let newUser = await this.prisma.user.create({
             data: { cpf, roles: splitRoles as Roles[], hash }
         });
 
-        newUser = await this.updateUserRoles(newUser);
+        newUser = await this.updateUserRoles(newUser, aluno, professor, admin);
 
         if ('aluno' in newUser) await this.refreshModalidade(newUser.aluno as Aluno);
-
-        if ('admin' in newUser) {
-            // Criar localidades
-        };
 
         const tokens = await this.getTokens(newUser.id, newUser.cpf);
 
@@ -49,9 +46,7 @@ export class AuthService {
     }
 
     async signinLocal({ password, cpf }: AuthDto): Promise<Tokens> {
-        const user = await this.prisma.user.findUnique({
-            where: { cpf }
-        });
+        const user = await this.prisma.user.findUnique({ where: { cpf } });
 
         if (!user) throw new ForbiddenException("Access Denied");
 
@@ -100,8 +95,14 @@ export class AuthService {
         return tokens;
     }
 
-    async createLocal({ endereco, bairro }) {
-        console.log(endereco, bairro);
+    async createLocal({ endereco, bairro, cpf }: LocalDto) {
+        const user = await this.prisma.user.findUnique({ where: { cpf } });
+
+        if (!user || !user.roles.find(role => role == "ADMIN")) throw new ForbiddenException("Access Denied");
+
+        const localidade = (await this.prisma.localidade.findUnique({ where: { endereco, bairro } })) || (await this.prisma.localidade.create({ data: { endereco, bairro } }));
+
+        return localidade;
     }
 
     async refreshModalidade(aluno: Aluno) {
@@ -111,7 +112,9 @@ export class AuthService {
                 .map(({ id }) => { return { id } });
             const alunos = { connect: alunosInscritos };
 
-            if (!hasModalidade) await this.prisma.modalidade.create({ data: { name: inscricao, periodo: aluno.periodos[ind] || aluno.periodos[0] } });
+            // Create if not exists
+            // if (!hasModalidade) await this.createModalidade({ name: inscricao, periodo: aluno.periodos[ind] });
+            if (!hasModalidade) throw new ForbiddenException(`Don't exists modalidade "${inscricao}"`);
 
             await this.prisma.modalidade.update({
                 where: { id: (hasModalidade || await this.prisma.modalidade.findFirst({ where: { name: inscricao } })).id },
@@ -120,7 +123,14 @@ export class AuthService {
         });
     }
 
-    async updateUserRoles(user: User) {
+    async createModalidade({ name, periodo, horarios, cpf }: ModalidadeDto) {
+        const user = await this.prisma.user.findUnique({ where: { cpf } });
+
+        if (!user || !user.roles.find(role => role == "ADMIN")) throw new ForbiddenException("Access Denied");
+        return await this.prisma.modalidade.create({ data: {name, periodo, horarios} });
+    };
+
+    async updateUserRoles(user: User, aluno: any, professor: any, admin: any) {
         const { data, include } = { include: {}, data: {} };
         user.roles.forEach(role => {
             const lower = role.toLowerCase();

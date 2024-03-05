@@ -118,10 +118,11 @@ model Modalidade {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  name   String
-  periodo Periodo @default(NOITE)
-  alunos Aluno[] @relation("aluno_modalidade")
-  vagas  Int?    @default(15)
+  name     String
+  periodo  Periodo    @default(MANHA)
+  horarios DateTime[]
+  alunos   Aluno[]    @relation("aluno_modalidade")
+  vagas    Int?       @default(15)
 
   @@map("modalidades")
 }
@@ -131,8 +132,8 @@ model Localidade {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  endereco String
-  bairro   String
+  endereco String @unique
+  bairro   String @unique
 
   @@map("localidades")
 }

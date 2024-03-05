@@ -5,6 +5,7 @@ import { Tokens } from './types';
 import { RtGuard } from 'src/common/guards';
 import { GetCurrentUser, GetCurrentUserId, Public } from 'src/common/decorators';
 import { LocalDto } from './dto/local.dto';
+import { ModalidadeDto } from './dto/modalidade.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -24,11 +25,16 @@ export class AuthController {
         return this.authService.signinLocal(dto);
     }
 
-    @Public()
-    @Post('create-local')
+    @Post('create/local')
     @HttpCode(HttpStatus.CREATED)
     createLocal(@Body() dto: LocalDto) {
         return this.authService.createLocal(dto);
+    }
+
+    @Post('create/modalidade')
+    @HttpCode(HttpStatus.CREATED)
+    createModalidade(@Body() dto: ModalidadeDto) {
+        return this.authService.createModalidade(dto);
     }
 
     @Post('logout')

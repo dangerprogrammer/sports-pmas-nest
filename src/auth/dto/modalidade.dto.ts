@@ -1,13 +1,17 @@
 import { IsNotEmpty, IsString } from "class-validator";
+import { Periodo } from "../types";
 
-export class LocalDto {
+export class ModalidadeDto {
     @IsString()
     @IsNotEmpty()
-    endereco: string;
+    name: string;
     
     @IsString()
     @IsNotEmpty()
-    bairro: string;
+    periodo: Periodo;
+
+    @IsNotEmpty()
+    horarios: Date[];
 
     @IsString()
     @IsNotEmpty()
