@@ -1,19 +1,18 @@
 import { IsNotEmpty, IsString } from "class-validator";
-import { Periodo } from "../types";
+import { Horario, Localidade, Aula } from "@prisma/client";
 
 export class ModalidadeDto {
     @IsString()
     @IsNotEmpty()
-    name: string;
-    
-    @IsString()
-    @IsNotEmpty()
-    periodo: Periodo;
+    name: Aula;
 
     @IsNotEmpty()
-    horarios: Date[];
+    horarios: Horario[];
 
     @IsString()
     @IsNotEmpty()
     cpf: string;
+
+    @IsNotEmpty()
+    local: Localidade;
 }

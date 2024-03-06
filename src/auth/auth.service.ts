@@ -4,7 +4,7 @@ import { AuthDto } from './dto/auth.dto';
 import * as bcrypt from 'bcrypt';
 import { Tokens } from './types';
 import { JwtService } from '@nestjs/jwt';
-import { Admin, Aluno, Professor, Roles, User } from '@prisma/client';
+import { Admin, Aluno, Professor, Inscricao, User } from '@prisma/client';
 import { LocalDto } from './dto/local.dto';
 import { ModalidadeDto } from './dto/modalidade.dto';
 
@@ -28,11 +28,9 @@ export class AuthService {
     ) { }
 
     async signupLocal({ password, cpf, roles, aluno, professor, admin }: AuthDto): Promise<Tokens> {
-        const hash = await this.hashData(password), splitRoles = roles || (roles as unknown as string)?.split(',');
+        const hash = await this.hashData(password);
 
-        let newUser = await this.prisma.user.create({
-            data: { cpf, roles: splitRoles as Roles[], hash }
-        });
+        let newUser = await this.prisma.user.create({ data: { cpf, roles, hash } });
 
         newUser = await this.updateUserRoles(newUser, aluno, professor, admin);
 
@@ -100,35 +98,63 @@ export class AuthService {
 
         if (!user || !user.roles.find(role => role == "ADMIN")) throw new ForbiddenException("Access Denied");
 
-        const localidade = (await this.prisma.localidade.findUnique({ where: { endereco, bairro } })) || (await this.prisma.localidade.create({ data: { endereco, bairro } }));
+        const localidade = this.findOrCreate({
+            prismaType: 'localidade',
+            where: { endereco, bairro },
+            data: { endereco, bairro }
+        });
 
         return localidade;
     }
 
-    async refreshModalidade(aluno: Aluno) {
-        aluno.inscricoes.forEach(async (inscricao, ind) => {
-            const hasModalidade = await this.prisma.modalidade.findFirst({ where: { name: inscricao } });
-            const alunosInscritos = (await this.prisma.aluno.findMany({ where: { inscricoes: { has: inscricao } } }))
-                .map(({ id }) => { return { id } });
-            const alunos = { connect: alunosInscritos };
-
-            // Create if not exists
-            // if (!hasModalidade) await this.createModalidade({ name: inscricao, periodo: aluno.periodos[ind] });
-            if (!hasModalidade) throw new ForbiddenException(`Don't exists modalidade "${inscricao}"`);
-
-            await this.prisma.modalidade.update({
-                where: { id: (hasModalidade || await this.prisma.modalidade.findFirst({ where: { name: inscricao } })).id },
-                data: { alunos }
+    async createInscricoes(inscricoes: Inscricao[], aluno: Aluno) {
+        inscricoes.forEach(async inscricao => {
+            const prismaInscricao = await this.prisma.inscricao.create({
+                data: {
+                    aula: "HIDRO",
+                    aluno: {}
+                }
             });
+
+            console.log(inscricao);
         });
+
+        console.log(await this.prisma.inscricao.findMany());
     }
 
-    async createModalidade({ name, periodo, horarios, cpf }: ModalidadeDto) {
+    async refreshModalidade(aluno: Aluno) {
+        console.log('refreshModalidade');
+        // aluno.inscricoes.forEach(async inscricao => {
+        //     const hasModalidade = await this.prisma.modalidade.findUnique({ where: { name: inscricao } });
+        //     const alunosInscritos = (await this.prisma.aluno.findMany({ where: { inscricoes: { has: inscricao } } }))
+        //         .map(({ id }) => { return { id } });
+        //     const alunos = { connect: alunosInscritos };
+
+        //     if (!hasModalidade) throw new ForbiddenException(`Don't exists modalidade "${inscricao}"`);
+
+        //     await this.prisma.modalidade.update({ where: { name: inscricao }, data: { alunos } });
+        // });
+    }
+
+    async createModalidade({ name, local, horarios, cpf }: ModalidadeDto) {
         const user = await this.prisma.user.findUnique({ where: { cpf } });
 
         if (!user || !user.roles.find(role => role == "ADMIN")) throw new ForbiddenException("Access Denied");
-        return await this.prisma.modalidade.create({ data: {name, periodo, horarios} });
+
+        const modalidade = await this.findOrCreate({ prismaType: 'modalidade', where: { name }, data: { name, local: { create: local } } });
+
+        horarios.forEach(async horario => {
+            await this.findOrCreate({ prismaType: 'horario', where: { time: horario.time }, data: { ...horario } });
+
+            await this.prisma.horario.update({ where: { time: horario.time }, data: { modalidades: { connect: { id: modalidade.id } } } })
+        });
+
+        return modalidade;
     };
+
+    async findOrCreate({ prismaType, where, data }: { prismaType: string, where: {}, data: {} }) {
+        return (await this.prisma[prismaType].findUnique({ where })) || (await this.prisma[prismaType].create({ data }));
+    }
 
     async updateUserRoles(user: User, aluno: any, professor: any, admin: any) {
         const { data, include } = { include: {}, data: {} };
@@ -136,11 +162,31 @@ export class AuthService {
             const lower = role.toLowerCase();
             let create = eval(lower);
 
-            create = this.types[lower](create);
-
             include[lower] = !0;
             if (create) {
                 if ('menor' in create) create['menor'] = { create: create['menor'] };
+                if ('inscricoes' in create) {
+                    create['inscricoes'] = { create: create['inscricoes'] };
+
+                    create['inscricoes'].create.forEach(async (inscricao: any, ind: number) => {
+                        const horario = await this.prisma.horario.findUnique({ where: { time: inscricao.horario } });
+                        console.log(inscricao, horario);
+
+                        create['inscricoes'].create[ind] = {
+                            horario: {
+                                connect: horario
+                            }
+                        }
+                    });
+                };
+
+                // if ('inscricoes' in create) {
+                //     const inscricoes = create['inscricoes'];
+                //     this.createInscricoes(inscricoes, create);
+
+                //     delete create['inscricoes'];
+                // };
+
                 data[lower] = { create };
             };
         });

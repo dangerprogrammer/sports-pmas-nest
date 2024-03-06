@@ -94,10 +94,16 @@ CREATE TABLE "modalidades" (
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
     "name" TEXT NOT NULL,
-    "periodo" "Periodo" NOT NULL DEFAULT 'NOITE',
     "vagas" INTEGER DEFAULT 15,
 
     CONSTRAINT "modalidades_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "horarios" (
+    "modName" TEXT NOT NULL,
+    "time" TIMESTAMP(3) NOT NULL,
+    "periodo" "Periodo" NOT NULL
 );
 
 -- CreateTable
@@ -148,6 +154,18 @@ CREATE UNIQUE INDEX "professors_id_createdAt_updatedAt_key" ON "professors"("id"
 CREATE UNIQUE INDEX "admins_id_createdAt_updatedAt_key" ON "admins"("id", "createdAt", "updatedAt");
 
 -- CreateIndex
+CREATE UNIQUE INDEX "modalidades_name_key" ON "modalidades"("name");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "horarios_time_key" ON "horarios"("time");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "localidades_endereco_key" ON "localidades"("endereco");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "localidades_bairro_key" ON "localidades"("bairro");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "_aluno_modalidade_AB_unique" ON "_aluno_modalidade"("A", "B");
 
 -- CreateIndex
@@ -167,6 +185,9 @@ ALTER TABLE "professors" ADD CONSTRAINT "professors_id_createdAt_updatedAt_fkey"
 
 -- AddForeignKey
 ALTER TABLE "admins" ADD CONSTRAINT "admins_id_createdAt_updatedAt_fkey" FOREIGN KEY ("id", "createdAt", "updatedAt") REFERENCES "users"("id", "createdAt", "updatedAt") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "horarios" ADD CONSTRAINT "horarios_modName_fkey" FOREIGN KEY ("modName") REFERENCES "modalidades"("name") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "_aluno_modalidade" ADD CONSTRAINT "_aluno_modalidade_A_fkey" FOREIGN KEY ("A") REFERENCES "alunos"("id") ON DELETE CASCADE ON UPDATE CASCADE;

@@ -25,9 +25,10 @@ export type Aluno = {
     bairro: string;
     data_nasc: Date;
     sexo: Gender;
-    inscricoes: Inscricao[];
+    inscricoes: Aula[];
     periodos: Periodo[];
     atestados: Atestado[];
+    modalidades: Modalidade[];
     menor?: AlunoMenor;
 }
 
@@ -91,7 +92,7 @@ export type Admin_Prisma = Admin & {
 
 export type Modalidade = {
     name: string;
-    periodo: Periodo;
+    horarios: Horario[];
     alunos: Aluno[];
     vagas: number;
 }
@@ -100,6 +101,16 @@ export type Modalidade_Prisma = Modalidade & {
     id: number;
     createdAt: Date;
     updatedAt: Date;
+}
+
+export type Horario = {
+    time: Date;
+    periodo: Periodo;
+    modalidades: Modalidade[];
+}
+
+export type Horario_Prisma = Horario & {
+    id: number;
 }
 
 export type Localidade = {
@@ -119,7 +130,7 @@ export enum Periodo {
   NOITE = 'NOITE'
 }
 
-export enum Inscricao {
+export enum Aula {
   NATACAO = 'NATACAO',
   HIDRO = 'HIDRO'
 }

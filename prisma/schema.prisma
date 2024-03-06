@@ -50,8 +50,7 @@ model Aluno {
   bairro     String
   data_nasc  DateTime
   sexo       Gender
-  inscricoes Inscricao[]
-  periodos   Periodo[]
+  inscricoes Inscricao[] @relation("inscricoes")
   atestados  Atestado[]  @relation("atestados")
   menor      AlunoMenor? @relation("menor")
 
@@ -113,18 +112,44 @@ model Admin {
   @@map("admins")
 }
 
+model Inscricao {
+  id    Int   @id @default(autoincrement())
+  aluno Aluno @relation("inscricoes", fields: [id], references: [id])
+
+  aula    Aula    @unique
+  horario Horario? @relation("horario_inscricao")
+}
+
 model Modalidade {
   id        Int      @id @default(autoincrement())
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  name     String
-  periodo  Periodo    @default(MANHA)
-  horarios DateTime[]
-  alunos   Aluno[]    @relation("aluno_modalidade")
-  vagas    Int?       @default(15)
+  name     Aula      @default(NATACAO)
+  horarios Horario[] @relation("horario_modalidade")
+  alunos   Aluno[]   @relation("aluno_modalidade")
 
+  endereco String     @default("Endereco...")
+  bairro   String     @default("Bairro...")
+  local    Localidade @relation("local_modalidade", fields: [endereco, bairro], references: [endereco, bairro])
+
+  vagas Int? @default(15)
+
+  @@unique([endereco, bairro])
   @@map("modalidades")
+}
+
+model Horario {
+  id          Int          @id @default(autoincrement())
+  modalidades Modalidade[] @relation("horario_modalidade")
+
+  aula      Aula?      @unique
+  inscricao Inscricao? @relation("horario_inscricao", fields: [aula], references: [aula])
+
+  time    DateTime @unique
+  periodo Periodo
+
+  @@map("horarios")
 }
 
 model Localidade {
@@ -132,9 +157,11 @@ model Localidade {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  endereco String @unique
-  bairro   String @unique
+  modalidades Modalidade[] @relation("local_modalidade")
+  endereco    String       @unique
+  bairro      String       @unique
 
+  @@unique([endereco, bairro])
   @@map("localidades")
 }
 
@@ -144,7 +171,7 @@ enum Periodo {
   NOITE
 }
 
-enum Inscricao {
+enum Aula {
   NATACAO
   HIDRO
 }
