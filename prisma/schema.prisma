@@ -116,8 +116,9 @@ model Inscricao {
   id    Int   @id @default(autoincrement())
   aluno Aluno @relation("inscricoes", fields: [id], references: [id])
 
-  aula    Aula    @unique
-  horario Horario? @relation("horario_inscricao")
+  aula    Aula     @unique
+  time    DateTime
+  horario Horario  @relation(fields: [time], references: [time])
 }
 
 model Modalidade {
@@ -125,7 +126,7 @@ model Modalidade {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  name     Aula      @default(NATACAO)
+  name     Aula      @unique
   horarios Horario[] @relation("horario_modalidade")
   alunos   Aluno[]   @relation("aluno_modalidade")
 
@@ -143,8 +144,7 @@ model Horario {
   id          Int          @id @default(autoincrement())
   modalidades Modalidade[] @relation("horario_modalidade")
 
-  aula      Aula?      @unique
-  inscricao Inscricao? @relation("horario_inscricao", fields: [aula], references: [aula])
+  inscricoes Inscricao[]
 
   time    DateTime @unique
   periodo Periodo

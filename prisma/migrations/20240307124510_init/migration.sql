@@ -2,7 +2,7 @@
 CREATE TYPE "Periodo" AS ENUM ('MANHA', 'TARDE', 'NOITE');
 
 -- CreateEnum
-CREATE TYPE "Inscricao" AS ENUM ('NATACAO', 'HIDRO');
+CREATE TYPE "Aula" AS ENUM ('NATACAO', 'HIDRO');
 
 -- CreateEnum
 CREATE TYPE "Gender" AS ENUM ('FEMININO', 'MASCULINO', 'OUTRO');
@@ -36,8 +36,6 @@ CREATE TABLE "alunos" (
     "bairro" TEXT NOT NULL,
     "data_nasc" TIMESTAMP(3) NOT NULL,
     "sexo" "Gender" NOT NULL,
-    "inscricoes" "Inscricao"[],
-    "periodos" "Periodo"[],
 
     CONSTRAINT "alunos_pkey" PRIMARY KEY ("id")
 );
@@ -89,11 +87,22 @@ CREATE TABLE "admins" (
 );
 
 -- CreateTable
+CREATE TABLE "Inscricao" (
+    "id" SERIAL NOT NULL,
+    "aula" "Aula" NOT NULL,
+    "time" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "Inscricao_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
 CREATE TABLE "modalidades" (
     "id" SERIAL NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
-    "name" TEXT NOT NULL,
+    "name" "Aula" NOT NULL,
+    "endereco" TEXT NOT NULL DEFAULT 'Endereco...',
+    "bairro" TEXT NOT NULL DEFAULT 'Bairro...',
     "vagas" INTEGER DEFAULT 15,
 
     CONSTRAINT "modalidades_pkey" PRIMARY KEY ("id")
@@ -101,9 +110,11 @@ CREATE TABLE "modalidades" (
 
 -- CreateTable
 CREATE TABLE "horarios" (
-    "modName" TEXT NOT NULL,
+    "id" SERIAL NOT NULL,
     "time" TIMESTAMP(3) NOT NULL,
-    "periodo" "Periodo" NOT NULL
+    "periodo" "Periodo" NOT NULL,
+
+    CONSTRAINT "horarios_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -119,6 +130,12 @@ CREATE TABLE "localidades" (
 
 -- CreateTable
 CREATE TABLE "_aluno_modalidade" (
+    "A" INTEGER NOT NULL,
+    "B" INTEGER NOT NULL
+);
+
+-- CreateTable
+CREATE TABLE "_horario_modalidade" (
     "A" INTEGER NOT NULL,
     "B" INTEGER NOT NULL
 );
@@ -154,7 +171,13 @@ CREATE UNIQUE INDEX "professors_id_createdAt_updatedAt_key" ON "professors"("id"
 CREATE UNIQUE INDEX "admins_id_createdAt_updatedAt_key" ON "admins"("id", "createdAt", "updatedAt");
 
 -- CreateIndex
+CREATE UNIQUE INDEX "Inscricao_aula_key" ON "Inscricao"("aula");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "modalidades_name_key" ON "modalidades"("name");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "modalidades_endereco_bairro_key" ON "modalidades"("endereco", "bairro");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "horarios_time_key" ON "horarios"("time");
@@ -166,10 +189,19 @@ CREATE UNIQUE INDEX "localidades_endereco_key" ON "localidades"("endereco");
 CREATE UNIQUE INDEX "localidades_bairro_key" ON "localidades"("bairro");
 
 -- CreateIndex
+CREATE UNIQUE INDEX "localidades_endereco_bairro_key" ON "localidades"("endereco", "bairro");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "_aluno_modalidade_AB_unique" ON "_aluno_modalidade"("A", "B");
 
 -- CreateIndex
 CREATE INDEX "_aluno_modalidade_B_index" ON "_aluno_modalidade"("B");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "_horario_modalidade_AB_unique" ON "_horario_modalidade"("A", "B");
+
+-- CreateIndex
+CREATE INDEX "_horario_modalidade_B_index" ON "_horario_modalidade"("B");
 
 -- AddForeignKey
 ALTER TABLE "alunos" ADD CONSTRAINT "alunos_id_cpf_createdAt_updatedAt_fkey" FOREIGN KEY ("id", "cpf", "createdAt", "updatedAt") REFERENCES "users"("id", "cpf", "createdAt", "updatedAt") ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -187,10 +219,22 @@ ALTER TABLE "professors" ADD CONSTRAINT "professors_id_createdAt_updatedAt_fkey"
 ALTER TABLE "admins" ADD CONSTRAINT "admins_id_createdAt_updatedAt_fkey" FOREIGN KEY ("id", "createdAt", "updatedAt") REFERENCES "users"("id", "createdAt", "updatedAt") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "horarios" ADD CONSTRAINT "horarios_modName_fkey" FOREIGN KEY ("modName") REFERENCES "modalidades"("name") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "Inscricao" ADD CONSTRAINT "Inscricao_id_fkey" FOREIGN KEY ("id") REFERENCES "alunos"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Inscricao" ADD CONSTRAINT "Inscricao_time_fkey" FOREIGN KEY ("time") REFERENCES "horarios"("time") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "modalidades" ADD CONSTRAINT "modalidades_endereco_bairro_fkey" FOREIGN KEY ("endereco", "bairro") REFERENCES "localidades"("endereco", "bairro") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "_aluno_modalidade" ADD CONSTRAINT "_aluno_modalidade_A_fkey" FOREIGN KEY ("A") REFERENCES "alunos"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "_aluno_modalidade" ADD CONSTRAINT "_aluno_modalidade_B_fkey" FOREIGN KEY ("B") REFERENCES "modalidades"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "_horario_modalidade" ADD CONSTRAINT "_horario_modalidade_A_fkey" FOREIGN KEY ("A") REFERENCES "horarios"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "_horario_modalidade" ADD CONSTRAINT "_horario_modalidade_B_fkey" FOREIGN KEY ("B") REFERENCES "modalidades"("id") ON DELETE CASCADE ON UPDATE CASCADE;

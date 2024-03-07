@@ -4,7 +4,7 @@ import { AuthDto } from './dto/auth.dto';
 import * as bcrypt from 'bcrypt';
 import { Tokens } from './types';
 import { JwtService } from '@nestjs/jwt';
-import { Admin, Aluno, Professor, Inscricao, User } from '@prisma/client';
+import { Admin, Aluno, Professor, User } from '@prisma/client';
 import { LocalDto } from './dto/local.dto';
 import { ModalidadeDto } from './dto/modalidade.dto';
 
@@ -107,19 +107,32 @@ export class AuthService {
         return localidade;
     }
 
-    async createInscricoes(inscricoes: Inscricao[], aluno: Aluno) {
-        inscricoes.forEach(async inscricao => {
-            const prismaInscricao = await this.prisma.inscricao.create({
-                data: {
-                    aula: "HIDRO",
-                    aluno: {}
+    async createInscricoes(inscricoes: any, user: User) {
+        inscricoes.forEach(async (inscricao: any) => {
+            await this.prisma.aluno.update({
+                where: { id: user.id }, data: {
+                    inscricoes: {
+                        create: {
+                            aula: inscricao.aula,
+                            time: inscricao.horario
+                        }
+                    }
+                }, include: {
+                    inscricoes: true
                 }
             });
 
-            console.log(inscricao);
-        });
+            const horario = await this.prisma.horario.findUnique({ where: { time: inscricao.horario } });
 
-        console.log(await this.prisma.inscricao.findMany());
+            await this.prisma.inscricao.update({ where: { id: user.id }, data: {
+                horario: {
+                    connect: { id: horario.id }
+                }
+            },
+            include: {
+                horario: true
+            } })
+        });
     }
 
     async refreshModalidade(aluno: Aluno) {
@@ -158,40 +171,32 @@ export class AuthService {
 
     async updateUserRoles(user: User, aluno: any, professor: any, admin: any) {
         const { data, include } = { include: {}, data: {} };
-        user.roles.forEach(role => {
+        user.roles.forEach(async role => {
             const lower = role.toLowerCase();
             let create = eval(lower);
 
             include[lower] = !0;
             if (create) {
                 if ('menor' in create) create['menor'] = { create: create['menor'] };
-                if ('inscricoes' in create) {
-                    create['inscricoes'] = { create: create['inscricoes'] };
 
-                    create['inscricoes'].create.forEach(async (inscricao: any, ind: number) => {
-                        const horario = await this.prisma.horario.findUnique({ where: { time: inscricao.horario } });
-                        console.log(inscricao, horario);
-
-                        create['inscricoes'].create[ind] = {
-                            horario: {
-                                connect: horario
-                            }
-                        }
-                    });
+                if ('inscricoes' in create) data[lower] = {
+                    create: {
+                        ...create,
+                        inscricoes: {}
+                    }
                 };
 
-                // if ('inscricoes' in create) {
-                //     const inscricoes = create['inscricoes'];
-                //     this.createInscricoes(inscricoes, create);
+                await this.prisma.user.update({ where: { id: user.id }, data, include });
 
-                //     delete create['inscricoes'];
-                // };
+                if ('inscricoes' in create) {
+                    const inscricoes = create['inscricoes'];
 
-                data[lower] = { create };
+                    await this.createInscricoes(inscricoes, user);
+                };
             };
         });
 
-        return await this.prisma.user.update({ where: { id: user.id }, data, include });
+        return await this.prisma.user.findUnique({ where: { id: user.id } });
     }
 
     async updateRtHash(userId: number, rt: string) {
