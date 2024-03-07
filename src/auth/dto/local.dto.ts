@@ -8,8 +8,4 @@ export class LocalDto {
     @IsString()
     @IsNotEmpty()
     bairro: string;
-
-    @IsString()
-    @IsNotEmpty()
-    cpf: string;
 }

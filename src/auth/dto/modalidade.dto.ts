@@ -9,10 +9,6 @@ export class ModalidadeDto {
     @IsNotEmpty()
     horarios: Horario[];
 
-    @IsString()
-    @IsNotEmpty()
-    cpf: string;
-
     @IsNotEmpty()
     local: Localidade;
 }

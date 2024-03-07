@@ -2,7 +2,7 @@ import { Body, Controller, HttpCode, HttpStatus, Post, UseGuards } from '@nestjs
 import { AuthService } from './auth.service';
 import { AuthDto } from './dto/auth.dto';
 import { Tokens } from './types';
-import { RtGuard } from 'src/common/guards';
+import { RoleGuard, RtGuard } from 'src/common/guards';
 import { GetCurrentUser, GetCurrentUserId, Public } from 'src/common/decorators';
 import { LocalDto } from './dto/local.dto';
 import { ModalidadeDto } from './dto/modalidade.dto';
@@ -25,12 +25,14 @@ export class AuthController {
         return this.authService.signinLocal(dto);
     }
 
+    @UseGuards(RoleGuard)
     @Post('create/local')
     @HttpCode(HttpStatus.CREATED)
     createLocal(@Body() dto: LocalDto) {
         return this.authService.createLocal(dto);
     }
 
+    @UseGuards(RoleGuard)
     @Post('create/modalidade')
     @HttpCode(HttpStatus.CREATED)
     createModalidade(@Body() dto: ModalidadeDto) {

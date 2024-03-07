@@ -18,8 +18,9 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  cpf   String  @unique
-  roles Roles[] @default([ALUNO])
+  cpf       String @unique
+  nome_comp String
+  roles     Role[] @default([ALUNO])
 
   aluno     Aluno?     @relation("aluno")
   professor Professor? @relation("professor")
@@ -28,8 +29,10 @@ model User {
   hash     String
   hashedRt String?
 
-  @@unique(fields: [id, cpf, createdAt, updatedAt])
-  @@unique(fields: [id, createdAt, updatedAt])
+  solic Solic?
+
+  @@unique(fields: [id, cpf, createdAt, updatedAt, nome_comp])
+  @@unique(fields: [id, createdAt, updatedAt, nome_comp])
   @@unique(fields: [createdAt, updatedAt])
   @@map("users")
 }
@@ -38,7 +41,7 @@ model Aluno {
   id        Int      @id
   createdAt DateTime
   updatedAt DateTime
-  user      User     @relation("aluno", fields: [id, cpf, createdAt, updatedAt], references: [id, cpf, createdAt, updatedAt])
+  user      User     @relation("aluno", fields: [id, cpf, createdAt, updatedAt, nome_comp], references: [id, cpf, createdAt, updatedAt, nome_comp])
 
   modalidades Modalidade[] @relation("aluno_modalidade")
 
@@ -54,7 +57,7 @@ model Aluno {
   atestados  Atestado[]  @relation("atestados")
   menor      AlunoMenor? @relation("menor")
 
-  @@unique([id, cpf, createdAt, updatedAt])
+  @@unique([id, cpf, createdAt, updatedAt, nome_comp])
   @@unique([id, createdAt, updatedAt])
   @@map("alunos")
 }
@@ -96,9 +99,10 @@ model Professor {
   id        Int      @id
   createdAt DateTime
   updatedAt DateTime
-  user      User     @relation("professor", fields: [id, createdAt, updatedAt], references: [id, createdAt, updatedAt])
+  nome_comp String
+  user      User     @relation("professor", fields: [id, createdAt, updatedAt, nome_comp], references: [id, createdAt, updatedAt, nome_comp])
 
-  @@unique([id, createdAt, updatedAt])
+  @@unique([id, createdAt, updatedAt, nome_comp])
   @@map("professors")
 }
 
@@ -106,10 +110,26 @@ model Admin {
   id        Int      @id
   createdAt DateTime
   updatedAt DateTime
-  user      User     @relation("admin", fields: [id, createdAt, updatedAt], references: [id, createdAt, updatedAt])
+  nome_comp String
+  user      User     @relation("admin", fields: [id, createdAt, updatedAt, nome_comp], references: [id, createdAt, updatedAt, nome_comp])
 
-  @@unique([id, createdAt, updatedAt])
+  solics Solic[]
+
+  @@unique([id, createdAt, updatedAt, nome_comp])
   @@map("admins")
+}
+
+model Solic {
+  id  Int     @id @default(autoincrement())
+  toAdmins Admin[]
+
+  userId Int  @unique
+  from   User @relation(fields: [userId], references: [id])
+
+  desc String
+  role Role
+
+  @@map("solics")
 }
 
 model Inscricao {
@@ -182,7 +202,7 @@ enum Gender {
   OUTRO
 }
 
-enum Roles {
+enum Role {
   ALUNO
   PROFESSOR
   ADMIN

@@ -1,5 +1,5 @@
 import { IsNotEmpty, IsString } from "class-validator";
-import { Aluno, Professor, Admin, Roles } from "@prisma/client";
+import { Aluno, Professor, Admin, Role, Solic } from "@prisma/client";
 export class AuthDto {
     @IsNotEmpty()
     @IsString()
@@ -9,9 +9,15 @@ export class AuthDto {
     @IsString()
     password: string;
 
+    @IsNotEmpty()
+    @IsString()
+    nome_comp: string;
+
     aluno?: Aluno | string;
     professor?: Professor | string;
     admin?: Admin | string;
 
-    roles?: Roles[];
+    roles?: Role[];
+
+    solic?: Solic | string;
 }

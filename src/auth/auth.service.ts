@@ -27,12 +27,12 @@ export class AuthService {
         private jwtService: JwtService
     ) { }
 
-    async signupLocal({ password, cpf, roles, aluno, professor, admin }: AuthDto): Promise<Tokens> {
+    async signupLocal({ password, cpf, roles, nome_comp, aluno, professor, admin, solic }: AuthDto): Promise<Tokens> {
         const hash = await this.hashData(password);
 
-        let newUser = await this.prisma.user.create({ data: { cpf, roles, hash } });
+        let newUser = await this.prisma.user.create({ data: { cpf, roles, nome_comp, hash } });
 
-        newUser = await this.updateUserRoles(newUser, aluno, professor, admin);
+        newUser = await this.updateUserRoles(newUser, aluno, professor, admin, solic);
 
         if ('aluno' in newUser) await this.refreshModalidade(newUser.aluno as Aluno);
 
@@ -93,11 +93,7 @@ export class AuthService {
         return tokens;
     }
 
-    async createLocal({ endereco, bairro, cpf }: LocalDto) {
-        const user = await this.prisma.user.findUnique({ where: { cpf } });
-
-        if (!user || !user.roles.find(role => role == "ADMIN")) throw new ForbiddenException("Access Denied");
-
+    async createLocal({ endereco, bairro }: LocalDto) {
         const localidade = this.findOrCreate({
             prismaType: 'localidade',
             where: { endereco, bairro },
@@ -124,14 +120,16 @@ export class AuthService {
 
             const horario = await this.prisma.horario.findUnique({ where: { time: inscricao.horario } });
 
-            await this.prisma.inscricao.update({ where: { id: user.id }, data: {
-                horario: {
-                    connect: { id: horario.id }
+            await this.prisma.inscricao.update({
+                where: { id: user.id }, data: {
+                    horario: {
+                        connect: { id: horario.id }
+                    }
+                },
+                include: {
+                    horario: true
                 }
-            },
-            include: {
-                horario: true
-            } })
+            })
         });
     }
 
@@ -149,11 +147,7 @@ export class AuthService {
         // });
     }
 
-    async createModalidade({ name, local, horarios, cpf }: ModalidadeDto) {
-        const user = await this.prisma.user.findUnique({ where: { cpf } });
-
-        if (!user || !user.roles.find(role => role == "ADMIN")) throw new ForbiddenException("Access Denied");
-
+    async createModalidade({ name, local, horarios }: ModalidadeDto) {
         const modalidade = await this.findOrCreate({ prismaType: 'modalidade', where: { name }, data: { name, local: { create: local } } });
 
         horarios.forEach(async horario => {
@@ -169,32 +163,50 @@ export class AuthService {
         return (await this.prisma[prismaType].findUnique({ where })) || (await this.prisma[prismaType].create({ data }));
     }
 
-    async updateUserRoles(user: User, aluno: any, professor: any, admin: any) {
-        const { data, include } = { include: {}, data: {} };
-        user.roles.forEach(async role => {
-            const lower = role.toLowerCase();
-            let create = eval(lower);
+    async updateUserRoles(user: User, aluno: any, professor: any, admin: any, solic: any) {
+        const { data, include }: { data: any, include: any } = { data: {}, include: {} };
 
-            include[lower] = !0;
-            if (create) {
-                if ('menor' in create) create['menor'] = { create: create['menor'] };
+        // Await o forEach! RESOLVERRRR
+        (async () => {
+            for (const role in user.roles) {
+                console.log(role);
+                const lower = role.toLowerCase();
+                let create = eval(lower);
 
-                if ('inscricoes' in create) data[lower] = {
-                    create: {
-                        ...create,
-                        inscricoes: {}
-                    }
+                include[lower] = !0;
+                if (create) {
+                    if ('menor' in create) create['menor'] = { create: create['menor'] };
+
+                    if ('inscricoes' in create) data[lower] = {
+                        create: {
+                            ...create,
+                            inscricoes: {}
+                        }
+                    };
+
+                    await this.prisma.user.update({ where: { id: user.id }, data, include });
+
+                    if ('inscricoes' in create) await this.createInscricoes(create['inscricoes'], user);
                 };
+            }
+        })();
 
-                await this.prisma.user.update({ where: { id: user.id }, data, include });
+        if (solic) {
+            const alunos = await this.prisma.aluno.findMany();
 
-                if ('inscricoes' in create) {
-                    const inscricoes = create['inscricoes'];
+            console.log(alunos);
 
-                    await this.createInscricoes(inscricoes, user);
-                };
-            };
-        });
+            const adminsID = (await this.prisma.admin.findMany()).map(({ id }) => { return { id } });
+
+            await this.prisma.solic.create({
+                data: {
+                    desc: solic.desc,
+                    role: solic.role,
+                    toAdmins: { connect: adminsID },
+                    from: { connect: { id: user.id } }
+                }
+            });
+        };
 
         return await this.prisma.user.findUnique({ where: { id: user.id } });
     }
