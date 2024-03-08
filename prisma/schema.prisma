@@ -120,7 +120,7 @@ model Admin {
 }
 
 model Solic {
-  id  Int     @id @default(autoincrement())
+  id       Int     @id @default(autoincrement())
   toAdmins Admin[]
 
   userId Int  @unique
@@ -133,11 +133,11 @@ model Solic {
 }
 
 model Inscricao {
-  id    Int   @id @default(autoincrement())
-  aluno Aluno @relation("inscricoes", fields: [id], references: [id])
+  alunoId Int   @default(autoincrement())
+  aluno   Aluno @relation("inscricoes", fields: [alunoId], references: [id])
 
-  aula    Aula     @unique
-  time    DateTime
+  aula    Aula
+  time    DateTime @unique
   horario Horario  @relation(fields: [time], references: [time])
 }
 

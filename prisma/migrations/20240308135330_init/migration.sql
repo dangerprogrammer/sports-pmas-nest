@@ -8,7 +8,7 @@ CREATE TYPE "Aula" AS ENUM ('NATACAO', 'HIDRO');
 CREATE TYPE "Gender" AS ENUM ('FEMININO', 'MASCULINO', 'OUTRO');
 
 -- CreateEnum
-CREATE TYPE "Roles" AS ENUM ('ALUNO', 'PROFESSOR', 'ADMIN');
+CREATE TYPE "Role" AS ENUM ('ALUNO', 'PROFESSOR', 'ADMIN');
 
 -- CreateTable
 CREATE TABLE "users" (
@@ -16,7 +16,8 @@ CREATE TABLE "users" (
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
     "cpf" TEXT NOT NULL,
-    "roles" "Roles"[] DEFAULT ARRAY['ALUNO']::"Roles"[],
+    "nome_comp" TEXT NOT NULL,
+    "roles" "Role"[] DEFAULT ARRAY['ALUNO']::"Role"[],
     "hash" TEXT NOT NULL,
     "hashedRt" TEXT,
 
@@ -73,6 +74,7 @@ CREATE TABLE "professors" (
     "id" INTEGER NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL,
     "updatedAt" TIMESTAMP(3) NOT NULL,
+    "nome_comp" TEXT NOT NULL,
 
     CONSTRAINT "professors_pkey" PRIMARY KEY ("id")
 );
@@ -82,17 +84,26 @@ CREATE TABLE "admins" (
     "id" INTEGER NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL,
     "updatedAt" TIMESTAMP(3) NOT NULL,
+    "nome_comp" TEXT NOT NULL,
 
     CONSTRAINT "admins_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
-CREATE TABLE "Inscricao" (
+CREATE TABLE "solics" (
     "id" SERIAL NOT NULL,
-    "aula" "Aula" NOT NULL,
-    "time" TIMESTAMP(3) NOT NULL,
+    "userId" INTEGER NOT NULL,
+    "desc" TEXT NOT NULL,
+    "role" "Role" NOT NULL,
 
-    CONSTRAINT "Inscricao_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "solics_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "Inscricao" (
+    "alunoId" SERIAL NOT NULL,
+    "aula" "Aula" NOT NULL,
+    "time" TIMESTAMP(3) NOT NULL
 );
 
 -- CreateTable
@@ -135,6 +146,12 @@ CREATE TABLE "_aluno_modalidade" (
 );
 
 -- CreateTable
+CREATE TABLE "_AdminToSolic" (
+    "A" INTEGER NOT NULL,
+    "B" INTEGER NOT NULL
+);
+
+-- CreateTable
 CREATE TABLE "_horario_modalidade" (
     "A" INTEGER NOT NULL,
     "B" INTEGER NOT NULL
@@ -144,16 +161,16 @@ CREATE TABLE "_horario_modalidade" (
 CREATE UNIQUE INDEX "users_cpf_key" ON "users"("cpf");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "users_id_cpf_createdAt_updatedAt_key" ON "users"("id", "cpf", "createdAt", "updatedAt");
+CREATE UNIQUE INDEX "users_id_cpf_createdAt_updatedAt_nome_comp_key" ON "users"("id", "cpf", "createdAt", "updatedAt", "nome_comp");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "users_id_createdAt_updatedAt_key" ON "users"("id", "createdAt", "updatedAt");
+CREATE UNIQUE INDEX "users_id_createdAt_updatedAt_nome_comp_key" ON "users"("id", "createdAt", "updatedAt", "nome_comp");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "users_createdAt_updatedAt_key" ON "users"("createdAt", "updatedAt");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "alunos_id_cpf_createdAt_updatedAt_key" ON "alunos"("id", "cpf", "createdAt", "updatedAt");
+CREATE UNIQUE INDEX "alunos_id_cpf_createdAt_updatedAt_nome_comp_key" ON "alunos"("id", "cpf", "createdAt", "updatedAt", "nome_comp");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "alunos_id_createdAt_updatedAt_key" ON "alunos"("id", "createdAt", "updatedAt");
@@ -165,13 +182,16 @@ CREATE UNIQUE INDEX "atestados_id_createdAt_updatedAt_key" ON "atestados"("id", 
 CREATE UNIQUE INDEX "aluno_menors_id_createdAt_updatedAt_key" ON "aluno_menors"("id", "createdAt", "updatedAt");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "professors_id_createdAt_updatedAt_key" ON "professors"("id", "createdAt", "updatedAt");
+CREATE UNIQUE INDEX "professors_id_createdAt_updatedAt_nome_comp_key" ON "professors"("id", "createdAt", "updatedAt", "nome_comp");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "admins_id_createdAt_updatedAt_key" ON "admins"("id", "createdAt", "updatedAt");
+CREATE UNIQUE INDEX "admins_id_createdAt_updatedAt_nome_comp_key" ON "admins"("id", "createdAt", "updatedAt", "nome_comp");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Inscricao_aula_key" ON "Inscricao"("aula");
+CREATE UNIQUE INDEX "solics_userId_key" ON "solics"("userId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Inscricao_time_key" ON "Inscricao"("time");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "modalidades_name_key" ON "modalidades"("name");
@@ -198,13 +218,19 @@ CREATE UNIQUE INDEX "_aluno_modalidade_AB_unique" ON "_aluno_modalidade"("A", "B
 CREATE INDEX "_aluno_modalidade_B_index" ON "_aluno_modalidade"("B");
 
 -- CreateIndex
+CREATE UNIQUE INDEX "_AdminToSolic_AB_unique" ON "_AdminToSolic"("A", "B");
+
+-- CreateIndex
+CREATE INDEX "_AdminToSolic_B_index" ON "_AdminToSolic"("B");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "_horario_modalidade_AB_unique" ON "_horario_modalidade"("A", "B");
 
 -- CreateIndex
 CREATE INDEX "_horario_modalidade_B_index" ON "_horario_modalidade"("B");
 
 -- AddForeignKey
-ALTER TABLE "alunos" ADD CONSTRAINT "alunos_id_cpf_createdAt_updatedAt_fkey" FOREIGN KEY ("id", "cpf", "createdAt", "updatedAt") REFERENCES "users"("id", "cpf", "createdAt", "updatedAt") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "alunos" ADD CONSTRAINT "alunos_id_cpf_createdAt_updatedAt_nome_comp_fkey" FOREIGN KEY ("id", "cpf", "createdAt", "updatedAt", "nome_comp") REFERENCES "users"("id", "cpf", "createdAt", "updatedAt", "nome_comp") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "atestados" ADD CONSTRAINT "atestados_id_createdAt_updatedAt_fkey" FOREIGN KEY ("id", "createdAt", "updatedAt") REFERENCES "alunos"("id", "createdAt", "updatedAt") ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -213,13 +239,16 @@ ALTER TABLE "atestados" ADD CONSTRAINT "atestados_id_createdAt_updatedAt_fkey" F
 ALTER TABLE "aluno_menors" ADD CONSTRAINT "aluno_menors_id_createdAt_updatedAt_fkey" FOREIGN KEY ("id", "createdAt", "updatedAt") REFERENCES "alunos"("id", "createdAt", "updatedAt") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "professors" ADD CONSTRAINT "professors_id_createdAt_updatedAt_fkey" FOREIGN KEY ("id", "createdAt", "updatedAt") REFERENCES "users"("id", "createdAt", "updatedAt") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "professors" ADD CONSTRAINT "professors_id_createdAt_updatedAt_nome_comp_fkey" FOREIGN KEY ("id", "createdAt", "updatedAt", "nome_comp") REFERENCES "users"("id", "createdAt", "updatedAt", "nome_comp") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "admins" ADD CONSTRAINT "admins_id_createdAt_updatedAt_fkey" FOREIGN KEY ("id", "createdAt", "updatedAt") REFERENCES "users"("id", "createdAt", "updatedAt") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "admins" ADD CONSTRAINT "admins_id_createdAt_updatedAt_nome_comp_fkey" FOREIGN KEY ("id", "createdAt", "updatedAt", "nome_comp") REFERENCES "users"("id", "createdAt", "updatedAt", "nome_comp") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Inscricao" ADD CONSTRAINT "Inscricao_id_fkey" FOREIGN KEY ("id") REFERENCES "alunos"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "solics" ADD CONSTRAINT "solics_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Inscricao" ADD CONSTRAINT "Inscricao_alunoId_fkey" FOREIGN KEY ("alunoId") REFERENCES "alunos"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Inscricao" ADD CONSTRAINT "Inscricao_time_fkey" FOREIGN KEY ("time") REFERENCES "horarios"("time") ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -232,6 +261,12 @@ ALTER TABLE "_aluno_modalidade" ADD CONSTRAINT "_aluno_modalidade_A_fkey" FOREIG
 
 -- AddForeignKey
 ALTER TABLE "_aluno_modalidade" ADD CONSTRAINT "_aluno_modalidade_B_fkey" FOREIGN KEY ("B") REFERENCES "modalidades"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "_AdminToSolic" ADD CONSTRAINT "_AdminToSolic_A_fkey" FOREIGN KEY ("A") REFERENCES "admins"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "_AdminToSolic" ADD CONSTRAINT "_AdminToSolic_B_fkey" FOREIGN KEY ("B") REFERENCES "solics"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "_horario_modalidade" ADD CONSTRAINT "_horario_modalidade_A_fkey" FOREIGN KEY ("A") REFERENCES "horarios"("id") ON DELETE CASCADE ON UPDATE CASCADE;

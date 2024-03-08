@@ -34,7 +34,9 @@ export class AuthService {
 
         newUser = await this.updateUserRoles(newUser, aluno, professor, admin, solic);
 
-        if ('aluno' in newUser) await this.refreshModalidade(newUser.aluno as Aluno);
+        const isAluno = await this.prisma.aluno.findUnique({ where: { id: newUser.id } });
+
+        if (isAluno) await this.refreshModalidade(isAluno);
 
         const tokens = await this.getTokens(newUser.id, newUser.cpf);
 
@@ -104,47 +106,41 @@ export class AuthService {
     }
 
     async createInscricoes(inscricoes: any, user: User) {
-        inscricoes.forEach(async (inscricao: any) => {
-            await this.prisma.aluno.update({
-                where: { id: user.id }, data: {
-                    inscricoes: {
-                        create: {
-                            aula: inscricao.aula,
-                            time: inscricao.horario
-                        }
-                    }
-                }, include: {
-                    inscricoes: true
-                }
-            });
+        await (async () => {
+            for (const inscricao of inscricoes) {
+                const horario = await this.prisma.horario.findUnique({ where: { time: inscricao.horario } });
 
-            const horario = await this.prisma.horario.findUnique({ where: { time: inscricao.horario } });
+                if (!horario) throw new ForbiddenException("Don't exists this horario!");
 
-            await this.prisma.inscricao.update({
-                where: { id: user.id }, data: {
-                    horario: {
-                        connect: { id: horario.id }
+                const hasInscricao = await this.prisma.inscricao.findUnique({ where: { time: inscricao.horario } });
+
+                if (!hasInscricao) await this.prisma.inscricao.create({
+                    data: {
+                        aula: inscricao.aula,
+                        aluno: { connect: { id: user.id } },
+                        horario: { connect: { id: horario.id } }
                     }
-                },
-                include: {
-                    horario: true
-                }
-            })
-        });
+                });
+            }
+        })();
     }
 
-    async refreshModalidade(aluno: Aluno) {
-        console.log('refreshModalidade');
-        // aluno.inscricoes.forEach(async inscricao => {
-        //     const hasModalidade = await this.prisma.modalidade.findUnique({ where: { name: inscricao } });
-        //     const alunosInscritos = (await this.prisma.aluno.findMany({ where: { inscricoes: { has: inscricao } } }))
-        //         .map(({ id }) => { return { id } });
-        //     const alunos = { connect: alunosInscritos };
+    async refreshModalidade(aluno: any) {
+        const inscricoesDoAluno = await this.prisma.inscricao.findMany({ where: { alunoId: aluno.id } });
 
-        //     if (!hasModalidade) throw new ForbiddenException(`Don't exists modalidade "${inscricao}"`);
+        await (async () => {
+            for (const inscricao of inscricoesDoAluno) {
+                const modalidade = await this.prisma.modalidade.findUnique({ where: { name: inscricao.aula } });
+                const alunosID = (await this.prisma.aluno.findMany({ where: {
+                    inscricoes: { every: { aula: inscricao.aula } }
+                } })).map(({ id }) => { return { id } });
 
-        //     await this.prisma.modalidade.update({ where: { name: inscricao }, data: { alunos } });
-        // });
+                if (!modalidade) throw new ForbiddenException(`Don't exists modalidade "${inscricao}"`);
+                if (alunosID.length > modalidade.vagas) throw new ForbiddenException(`Ah não! Esta modalidade já está lotada! (Max: ${modalidade.vagas})`);
+
+                await this.prisma.modalidade.update({ where: { name: inscricao.aula }, data: { alunos: { connect: alunosID } } });
+            };
+        })();
     }
 
     async createModalidade({ name, local, horarios }: ModalidadeDto) {
@@ -166,10 +162,8 @@ export class AuthService {
     async updateUserRoles(user: User, aluno: any, professor: any, admin: any, solic: any) {
         const { data, include }: { data: any, include: any } = { data: {}, include: {} };
 
-        // Await o forEach! RESOLVERRRR
-        (async () => {
-            for (const role in user.roles) {
-                console.log(role);
+        await (async () => {
+            for (const role of user.roles) {
                 const lower = role.toLowerCase();
                 let create = eval(lower);
 
@@ -177,12 +171,7 @@ export class AuthService {
                 if (create) {
                     if ('menor' in create) create['menor'] = { create: create['menor'] };
 
-                    if ('inscricoes' in create) data[lower] = {
-                        create: {
-                            ...create,
-                            inscricoes: {}
-                        }
-                    };
+                    data[lower] = 'inscricoes' in create ? { create: { ...create, inscricoes: {} } } : { create };
 
                     await this.prisma.user.update({ where: { id: user.id }, data, include });
 
@@ -192,19 +181,10 @@ export class AuthService {
         })();
 
         if (solic) {
-            const alunos = await this.prisma.aluno.findMany();
-
-            console.log(alunos);
-
             const adminsID = (await this.prisma.admin.findMany()).map(({ id }) => { return { id } });
 
             await this.prisma.solic.create({
-                data: {
-                    desc: solic.desc,
-                    role: solic.role,
-                    toAdmins: { connect: adminsID },
-                    from: { connect: { id: user.id } }
-                }
+                data: { ...solic, toAdmins: { connect: adminsID }, from: { connect: { id: user.id } } }
             });
         };
 
