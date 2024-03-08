@@ -6,6 +6,8 @@ import { RoleGuard, RtGuard } from 'src/common/guards';
 import { GetCurrentUser, GetCurrentUserId, Public } from 'src/common/decorators';
 import { LocalDto } from './dto/local.dto';
 import { ModalidadeDto } from './dto/modalidade.dto';
+import { AcceptDto } from './dto/accept.dto';
+import { AcceptedGuard } from 'src/common/guards/accepted.guard';
 
 @Controller('auth')
 export class AuthController {
@@ -19,6 +21,7 @@ export class AuthController {
     }
 
     @Public()
+    @UseGuards(AcceptedGuard)
     @Post('local/signin')
     @HttpCode(HttpStatus.OK)
     signinLocal(@Body() dto: AuthDto): Promise<Tokens> {
@@ -37,6 +40,13 @@ export class AuthController {
     @HttpCode(HttpStatus.CREATED)
     createModalidade(@Body() dto: ModalidadeDto) {
         return this.authService.createModalidade(dto);
+    }
+
+    @UseGuards(RoleGuard)
+    @Post('user')
+    @HttpCode(HttpStatus.ACCEPTED)
+    acceptUser(@Body() dto: AcceptDto) {
+        return this.authService.acceptUser(dto);
     }
 
     @Post('logout')

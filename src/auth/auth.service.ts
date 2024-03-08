@@ -7,6 +7,7 @@ import { JwtService } from '@nestjs/jwt';
 import { Admin, Aluno, Professor, User } from '@prisma/client';
 import { LocalDto } from './dto/local.dto';
 import { ModalidadeDto } from './dto/modalidade.dto';
+import { AcceptDto } from './dto/accept.dto';
 
 @Injectable()
 export class AuthService {
@@ -59,6 +60,14 @@ export class AuthService {
         await this.updateRtHash(user.id, tokens.refresh_token);
 
         return tokens;
+    }
+
+    async acceptUser({ cpf, accepted }: AcceptDto) {
+        const user = await this.prisma.user.findUnique({ where: { cpf } });
+
+        if (!user) throw new ForbiddenException("Don't has user!");
+
+        return await this.prisma.user.update({ where: { cpf }, data: { accepted } });
     }
 
     async logout(userId: number) {
@@ -131,9 +140,11 @@ export class AuthService {
         await (async () => {
             for (const inscricao of inscricoesDoAluno) {
                 const modalidade = await this.prisma.modalidade.findUnique({ where: { name: inscricao.aula } });
-                const alunosID = (await this.prisma.aluno.findMany({ where: {
-                    inscricoes: { every: { aula: inscricao.aula } }
-                } })).map(({ id }) => { return { id } });
+                const alunosID = (await this.prisma.aluno.findMany({
+                    where: {
+                        inscricoes: { every: { aula: inscricao.aula } }
+                    }
+                })).map(({ id }) => { return { id } });
 
                 if (!modalidade) throw new ForbiddenException(`Don't exists modalidade "${inscricao}"`);
                 if (alunosID.length > modalidade.vagas) throw new ForbiddenException(`Ah não! Esta modalidade já está lotada! (Max: ${modalidade.vagas})`);
@@ -144,7 +155,12 @@ export class AuthService {
     }
 
     async createModalidade({ name, local, horarios }: ModalidadeDto) {
-        const modalidade = await this.findOrCreate({ prismaType: 'modalidade', where: { name }, data: { name, local: { create: local } } });
+        const hasLocal = await this.findOrCreate({ prismaType: 'localidade', where: { endereco: local.endereco }, data: local });
+
+        const modalidade = await this.findOrCreate({
+            prismaType: 'modalidade', where: { name },
+            data: { name, local: { connect: { id: hasLocal.id } } }
+        });
 
         horarios.forEach(async horario => {
             await this.findOrCreate({ prismaType: 'horario', where: { time: horario.time }, data: { ...horario } });
@@ -170,6 +186,8 @@ export class AuthService {
                 include[lower] = !0;
                 if (create) {
                     if ('menor' in create) create['menor'] = { create: create['menor'] };
+
+                    if (role == 'ADMIN') data.accepted = !0;
 
                     data[lower] = 'inscricoes' in create ? { create: { ...create, inscricoes: {} } } : { create };
 

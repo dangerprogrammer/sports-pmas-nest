@@ -29,9 +29,10 @@ model User {
   hash     String
   hashedRt String?
 
-  solic Solic?
+  solic    Solic?
+  accepted Boolean? @default(false)
 
-  @@unique(fields: [id, cpf, createdAt, updatedAt, nome_comp])
+  @@unique(fields: [id, cpf, createdAt, updatedAt, nome_comp, accepted])
   @@unique(fields: [id, createdAt, updatedAt, nome_comp])
   @@unique(fields: [createdAt, updatedAt])
   @@map("users")
@@ -41,7 +42,7 @@ model Aluno {
   id        Int      @id
   createdAt DateTime
   updatedAt DateTime
-  user      User     @relation("aluno", fields: [id, cpf, createdAt, updatedAt, nome_comp], references: [id, cpf, createdAt, updatedAt, nome_comp])
+  user      User     @relation("aluno", fields: [id, cpf, createdAt, updatedAt, nome_comp, accepted], references: [id, cpf, createdAt, updatedAt, nome_comp, accepted])
 
   modalidades Modalidade[] @relation("aluno_modalidade")
 
@@ -57,8 +58,10 @@ model Aluno {
   atestados  Atestado[]  @relation("atestados")
   menor      AlunoMenor? @relation("menor")
 
-  @@unique([id, cpf, createdAt, updatedAt, nome_comp])
-  @@unique([id, createdAt, updatedAt])
+  accepted Boolean @default(false)
+
+  @@unique([id, cpf, createdAt, updatedAt, nome_comp, accepted])
+  @@unique([id, createdAt, updatedAt, accepted])
   @@map("alunos")
 }
 
@@ -66,12 +69,14 @@ model Atestado {
   id        Int      @id
   createdAt DateTime
   updatedAt DateTime
-  aluno     Aluno    @relation("atestados", fields: [id, createdAt, updatedAt], references: [id, createdAt, updatedAt])
+  aluno     Aluno    @relation("atestados", fields: [id, createdAt, updatedAt, accepted], references: [id, createdAt, updatedAt, accepted])
 
   anexo String
   msg   String?
 
-  @@unique([id, createdAt, updatedAt])
+  accepted Boolean @default(false)
+
+  @@unique([id, createdAt, updatedAt, accepted])
   @@map("atestados")
 }
 
@@ -79,7 +84,7 @@ model AlunoMenor {
   id        Int      @id
   createdAt DateTime
   updatedAt DateTime
-  aluno     Aluno    @relation("menor", fields: [id, createdAt, updatedAt], references: [id, createdAt, updatedAt])
+  aluno     Aluno    @relation("menor", fields: [id, createdAt, updatedAt, accepted], references: [id, createdAt, updatedAt, accepted])
 
   nomeResp1  String
   cpfResp1   String
@@ -91,7 +96,9 @@ model AlunoMenor {
   emailResp2 String?
   telResp2   String?
 
-  @@unique([id, createdAt, updatedAt])
+  accepted Boolean @default(false)
+
+  @@unique([id, createdAt, updatedAt, accepted])
   @@map("aluno_menors")
 }
 
@@ -156,7 +163,6 @@ model Modalidade {
 
   vagas Int? @default(15)
 
-  @@unique([endereco, bairro])
   @@map("modalidades")
 }
 
@@ -179,7 +185,7 @@ model Localidade {
 
   modalidades Modalidade[] @relation("local_modalidade")
   endereco    String       @unique
-  bairro      String       @unique
+  bairro      String
 
   @@unique([endereco, bairro])
   @@map("localidades")

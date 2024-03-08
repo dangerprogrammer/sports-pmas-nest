@@ -197,16 +197,10 @@ CREATE UNIQUE INDEX "Inscricao_time_key" ON "Inscricao"("time");
 CREATE UNIQUE INDEX "modalidades_name_key" ON "modalidades"("name");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "modalidades_endereco_bairro_key" ON "modalidades"("endereco", "bairro");
-
--- CreateIndex
 CREATE UNIQUE INDEX "horarios_time_key" ON "horarios"("time");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "localidades_endereco_key" ON "localidades"("endereco");
-
--- CreateIndex
-CREATE UNIQUE INDEX "localidades_bairro_key" ON "localidades"("bairro");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "localidades_endereco_bairro_key" ON "localidades"("endereco", "bairro");
