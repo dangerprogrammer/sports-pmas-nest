@@ -8,6 +8,7 @@ import { Admin, Aluno, Professor, User } from '@prisma/client';
 import { LocalDto } from './dto/local.dto';
 import { ModalidadeDto } from './dto/modalidade.dto';
 import { AcceptDto } from './dto/accept.dto';
+import { UpdateLocalDto, UpdateModalidadeDto } from './dto/updates.dto';
 
 @Injectable()
 export class AuthService {
@@ -105,13 +106,36 @@ export class AuthService {
     }
 
     async createLocal({ endereco, bairro }: LocalDto) {
-        const localidade = this.findOrCreate({
+        const localidade = await this.findOrCreate({
             prismaType: 'localidade',
             where: { endereco, bairro },
             data: { endereco, bairro }
         });
 
         return localidade;
+    }
+
+    async updateLocal({ local: { endereco: oldEndereco, bairro: oldBairro }, update }: UpdateLocalDto) {
+        const local = await this.prisma.localidade.findUnique({ where: { endereco: oldEndereco, bairro: oldBairro } });
+
+        if (local) await this.prisma.localidade.update({ where: { endereco: oldEndereco, bairro: oldBairro }, data: update });
+        else throw new ForbiddenException("Local not found");
+
+        return await this.prisma.localidade.findMany();
+    }
+
+    async deleteLocal(local: LocalDto) {
+        const localidade = await this.prisma.localidade.findUnique({ where: local });
+
+        if (localidade) {
+            const hasModalidades = await this.prisma.modalidade.findMany({ where: { local } });
+
+            if (hasModalidades) await this.prisma.modalidade.deleteMany({ where: { local } });
+
+            await this.prisma.localidade.delete({ where: local });
+        };
+
+        return 'Local deleted successfully';
     }
 
     async createInscricoes(inscricoes: any, user: User) {
@@ -142,7 +166,7 @@ export class AuthService {
                 const modalidade = await this.prisma.modalidade.findUnique({ where: { name: inscricao.aula } });
                 const alunosID = (await this.prisma.aluno.findMany({
                     where: {
-                        inscricoes: { every: { aula: inscricao.aula } }
+                        inscricoes: { some: { aula: inscricao.aula } }
                     }
                 })).map(({ id }) => { return { id } });
 
@@ -155,7 +179,7 @@ export class AuthService {
     }
 
     async createModalidade({ name, local, horarios }: ModalidadeDto) {
-        const hasLocal = await this.findOrCreate({ prismaType: 'localidade', where: { endereco: local.endereco }, data: local });
+        const hasLocal = await this.createLocal(local);
 
         const modalidade = await this.findOrCreate({
             prismaType: 'modalidade', where: { name },
@@ -163,13 +187,32 @@ export class AuthService {
         });
 
         horarios.forEach(async horario => {
-            await this.findOrCreate({ prismaType: 'horario', where: { time: horario.time }, data: { ...horario } });
+            await this.findOrCreate({ prismaType: 'horario', where: { time: horario.time }, data: horario });
 
             await this.prisma.horario.update({ where: { time: horario.time }, data: { modalidades: { connect: { id: modalidade.id } } } })
         });
 
         return modalidade;
-    };
+    }
+
+    async updateModalidade({ name, update }: UpdateModalidadeDto) {
+        const modalidade = await this.prisma.modalidade.findUnique({ where: { name } });
+        const horarios = { connect: update.horarios };
+        const local = { connect: update.local };
+
+        if (modalidade) await this.prisma.modalidade.update({ where: { name }, data: { ...update, local, horarios } });
+        else throw new ForbiddenException("Modalidade not found");
+
+        return await this.prisma.modalidade.findMany();
+    }
+
+    async deleteModalidade({ name }: ModalidadeDto) {
+        const modalidade = await this.prisma.modalidade.findUnique({ where: { name } });
+
+        if (modalidade) await this.prisma.modalidade.delete({ where: { name } });
+
+        return 'Modalidade deleted successfully';
+    }
 
     async findOrCreate({ prismaType, where, data }: { prismaType: string, where: {}, data: {} }) {
         return (await this.prisma[prismaType].findUnique({ where })) || (await this.prisma[prismaType].create({ data }));

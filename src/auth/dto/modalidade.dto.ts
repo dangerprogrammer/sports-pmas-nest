@@ -6,9 +6,7 @@ export class ModalidadeDto {
     @IsNotEmpty()
     name: Aula;
 
-    @IsNotEmpty()
-    horarios: Horario[];
+    horarios?: Horario[];
 
-    @IsNotEmpty()
-    local: Localidade;
+    local?: Localidade;
 }

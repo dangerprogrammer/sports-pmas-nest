@@ -20,6 +20,7 @@ CREATE TABLE "users" (
     "roles" "Role"[] DEFAULT ARRAY['ALUNO']::"Role"[],
     "hash" TEXT NOT NULL,
     "hashedRt" TEXT,
+    "accepted" BOOLEAN DEFAULT false,
 
     CONSTRAINT "users_pkey" PRIMARY KEY ("id")
 );
@@ -37,6 +38,7 @@ CREATE TABLE "alunos" (
     "bairro" TEXT NOT NULL,
     "data_nasc" TIMESTAMP(3) NOT NULL,
     "sexo" "Gender" NOT NULL,
+    "accepted" BOOLEAN NOT NULL DEFAULT false,
 
     CONSTRAINT "alunos_pkey" PRIMARY KEY ("id")
 );
@@ -48,6 +50,7 @@ CREATE TABLE "atestados" (
     "updatedAt" TIMESTAMP(3) NOT NULL,
     "anexo" TEXT NOT NULL,
     "msg" TEXT,
+    "accepted" BOOLEAN NOT NULL DEFAULT false,
 
     CONSTRAINT "atestados_pkey" PRIMARY KEY ("id")
 );
@@ -65,6 +68,7 @@ CREATE TABLE "aluno_menors" (
     "cpfResp2" TEXT,
     "emailResp2" TEXT,
     "telResp2" TEXT,
+    "accepted" BOOLEAN NOT NULL DEFAULT false,
 
     CONSTRAINT "aluno_menors_pkey" PRIMARY KEY ("id")
 );
@@ -161,7 +165,7 @@ CREATE TABLE "_horario_modalidade" (
 CREATE UNIQUE INDEX "users_cpf_key" ON "users"("cpf");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "users_id_cpf_createdAt_updatedAt_nome_comp_key" ON "users"("id", "cpf", "createdAt", "updatedAt", "nome_comp");
+CREATE UNIQUE INDEX "users_id_cpf_createdAt_updatedAt_nome_comp_accepted_key" ON "users"("id", "cpf", "createdAt", "updatedAt", "nome_comp", "accepted");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "users_id_createdAt_updatedAt_nome_comp_key" ON "users"("id", "createdAt", "updatedAt", "nome_comp");
@@ -170,16 +174,16 @@ CREATE UNIQUE INDEX "users_id_createdAt_updatedAt_nome_comp_key" ON "users"("id"
 CREATE UNIQUE INDEX "users_createdAt_updatedAt_key" ON "users"("createdAt", "updatedAt");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "alunos_id_cpf_createdAt_updatedAt_nome_comp_key" ON "alunos"("id", "cpf", "createdAt", "updatedAt", "nome_comp");
+CREATE UNIQUE INDEX "alunos_id_cpf_createdAt_updatedAt_nome_comp_accepted_key" ON "alunos"("id", "cpf", "createdAt", "updatedAt", "nome_comp", "accepted");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "alunos_id_createdAt_updatedAt_key" ON "alunos"("id", "createdAt", "updatedAt");
+CREATE UNIQUE INDEX "alunos_id_createdAt_updatedAt_accepted_key" ON "alunos"("id", "createdAt", "updatedAt", "accepted");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "atestados_id_createdAt_updatedAt_key" ON "atestados"("id", "createdAt", "updatedAt");
+CREATE UNIQUE INDEX "atestados_id_createdAt_updatedAt_accepted_key" ON "atestados"("id", "createdAt", "updatedAt", "accepted");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "aluno_menors_id_createdAt_updatedAt_key" ON "aluno_menors"("id", "createdAt", "updatedAt");
+CREATE UNIQUE INDEX "aluno_menors_id_createdAt_updatedAt_accepted_key" ON "aluno_menors"("id", "createdAt", "updatedAt", "accepted");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "professors_id_createdAt_updatedAt_nome_comp_key" ON "professors"("id", "createdAt", "updatedAt", "nome_comp");
@@ -224,13 +228,13 @@ CREATE UNIQUE INDEX "_horario_modalidade_AB_unique" ON "_horario_modalidade"("A"
 CREATE INDEX "_horario_modalidade_B_index" ON "_horario_modalidade"("B");
 
 -- AddForeignKey
-ALTER TABLE "alunos" ADD CONSTRAINT "alunos_id_cpf_createdAt_updatedAt_nome_comp_fkey" FOREIGN KEY ("id", "cpf", "createdAt", "updatedAt", "nome_comp") REFERENCES "users"("id", "cpf", "createdAt", "updatedAt", "nome_comp") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "alunos" ADD CONSTRAINT "alunos_id_cpf_createdAt_updatedAt_nome_comp_accepted_fkey" FOREIGN KEY ("id", "cpf", "createdAt", "updatedAt", "nome_comp", "accepted") REFERENCES "users"("id", "cpf", "createdAt", "updatedAt", "nome_comp", "accepted") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "atestados" ADD CONSTRAINT "atestados_id_createdAt_updatedAt_fkey" FOREIGN KEY ("id", "createdAt", "updatedAt") REFERENCES "alunos"("id", "createdAt", "updatedAt") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "atestados" ADD CONSTRAINT "atestados_id_createdAt_updatedAt_accepted_fkey" FOREIGN KEY ("id", "createdAt", "updatedAt", "accepted") REFERENCES "alunos"("id", "createdAt", "updatedAt", "accepted") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "aluno_menors" ADD CONSTRAINT "aluno_menors_id_createdAt_updatedAt_fkey" FOREIGN KEY ("id", "createdAt", "updatedAt") REFERENCES "alunos"("id", "createdAt", "updatedAt") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "aluno_menors" ADD CONSTRAINT "aluno_menors_id_createdAt_updatedAt_accepted_fkey" FOREIGN KEY ("id", "createdAt", "updatedAt", "accepted") REFERENCES "alunos"("id", "createdAt", "updatedAt", "accepted") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "professors" ADD CONSTRAINT "professors_id_createdAt_updatedAt_nome_comp_fkey" FOREIGN KEY ("id", "createdAt", "updatedAt", "nome_comp") REFERENCES "users"("id", "createdAt", "updatedAt", "nome_comp") ON DELETE RESTRICT ON UPDATE CASCADE;

@@ -1,4 +1,4 @@
-import { Body, Controller, HttpCode, HttpStatus, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, HttpCode, HttpStatus, Patch, Post, UseGuards } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { AuthDto } from './dto/auth.dto';
 import { Tokens } from './types';
@@ -8,6 +8,7 @@ import { LocalDto } from './dto/local.dto';
 import { ModalidadeDto } from './dto/modalidade.dto';
 import { AcceptDto } from './dto/accept.dto';
 import { AcceptedGuard } from 'src/common/guards/accepted.guard';
+import { UpdateLocalDto, UpdateModalidadeDto } from './dto/updates.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -36,10 +37,38 @@ export class AuthController {
     }
 
     @UseGuards(RoleGuard)
+    @Patch('update/local')
+    @HttpCode(HttpStatus.CREATED)
+    updateLocal(@Body() dto: UpdateLocalDto) {
+        return this.authService.updateLocal(dto);
+    }
+
+    @UseGuards(RoleGuard)
+    @Delete('delete/local')
+    @HttpCode(HttpStatus.ACCEPTED)
+    deleteLocal(@Body() dto: LocalDto) {
+        return this.authService.deleteLocal(dto);
+    }
+
+    @UseGuards(RoleGuard)
     @Post('create/modalidade')
     @HttpCode(HttpStatus.CREATED)
     createModalidade(@Body() dto: ModalidadeDto) {
         return this.authService.createModalidade(dto);
+    }
+
+    @UseGuards(RoleGuard)
+    @Patch('update/modalidade')
+    @HttpCode(HttpStatus.CREATED)
+    updateModalidade(@Body() dto: UpdateModalidadeDto) {
+        return this.authService.updateModalidade(dto);
+    }
+
+    @UseGuards(RoleGuard)
+    @Delete('delete/modalidade')
+    @HttpCode(HttpStatus.ACCEPTED)
+    deleteModalidade(@Body() dto: ModalidadeDto) {
+        return this.authService.deleteModalidade(dto);
     }
 
     @UseGuards(RoleGuard)
