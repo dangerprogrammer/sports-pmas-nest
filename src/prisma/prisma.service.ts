@@ -25,7 +25,7 @@ export class PrismaService
             cpf: "ROOT",
             roles: ["ADMIN"],
             nome_comp: "Root Admin",
-            admin: {},
+            admin: { create: {} },
             hash: await bcrypt.hash("@pmas1234@", 10),
             accepted: !0
         }});
