@@ -201,9 +201,7 @@ export class AuthService {
             for (const inscricao of inscricoesDoAluno) {
                 const modalidade = await this.prisma.modalidade.findUnique({ where: { name: inscricao.aula } });
                 const alunosID = (await this.prisma.aluno.findMany({
-                    where: {
-                        inscricoes: { some: { aula: inscricao.aula } }
-                    }
+                    where: { inscricoes: { some: { aula: inscricao.aula } } }
                 })).map(({ id }) => { return { id } });
 
                 if (!modalidade) throw new ForbiddenException(`Don't exists modalidade "${inscricao}"`);
