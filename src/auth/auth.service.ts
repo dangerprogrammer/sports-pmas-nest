@@ -228,8 +228,6 @@ export class AuthService {
                 if (create) {
                     if ('menor' in create) create['menor'] = { create: create['menor'] };
 
-                    if (role == 'ADMIN') data.accepted = !0;
-
                     data[lower] = 'inscricoes' in create ? { create: { ...create, inscricoes: {} } } : { create };
 
                     await this.prisma.user.update({ where: { id: user.id }, data, include });
