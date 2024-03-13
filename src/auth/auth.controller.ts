@@ -1,14 +1,14 @@
-import { Body, Controller, Delete, HttpCode, HttpStatus, Patch, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, HttpCode, HttpStatus, Patch, Post, Req, UseGuards } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { AuthDto } from './dto/auth.dto';
 import { Tokens } from './types';
-import { RoleGuard, RtGuard } from 'src/common/guards';
+import { AcceptedGuard, RoleGuard, RtGuard, AlunoGuard } from 'src/common/guards';
 import { GetCurrentUser, GetCurrentUserId, Public } from 'src/common/decorators';
 import { LocalDto } from './dto/local.dto';
 import { ModalidadeDto } from './dto/modalidade.dto';
 import { AcceptDto } from './dto/accept.dto';
-import { AcceptedGuard } from 'src/common/guards/accepted.guard';
 import { UpdateLocalDto, UpdateModalidadeDto } from './dto/updates.dto';
+import { InscricaoDto } from './dto/inscricao.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -27,6 +27,13 @@ export class AuthController {
     @HttpCode(HttpStatus.OK)
     signinLocal(@Body() dto: AuthDto): Promise<Tokens> {
         return this.authService.signinLocal(dto);
+    }
+
+    @UseGuards(AlunoGuard)
+    @Patch('aluno/inscricao')
+    @HttpCode(HttpStatus.OK)
+    subscribeUser(@Body() dto: InscricaoDto[], @Req() req: Request) {
+        return this.authService.subscribeUser(dto, req);
     }
 
     @UseGuards(RoleGuard)

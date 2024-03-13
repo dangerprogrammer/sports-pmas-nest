@@ -9,6 +9,7 @@ import { LocalDto } from './dto/local.dto';
 import { ModalidadeDto } from './dto/modalidade.dto';
 import { AcceptDto } from './dto/accept.dto';
 import { UpdateLocalDto, UpdateModalidadeDto } from './dto/updates.dto';
+import { InscricaoDto } from './dto/inscricao.dto';
 
 @Injectable()
 export class AuthService {
@@ -61,6 +62,31 @@ export class AuthService {
         await this.updateRtHash(user.id, tokens.refresh_token);
 
         return tokens;
+    }
+
+    async subscribeUser(inscricoes: InscricaoDto[], req: any) {
+        const { user } = req;
+        const prismaUser = await this.prisma.aluno.findUnique({ where: { id: user.sub } });
+        const createdInscricoes = [];
+
+        await (async () => {
+            for (const { aula, horario } of inscricoes) {
+                const prismaHorario = await this.prisma.horario.findUnique({ where: { time: horario } });
+                const hasInscricao = await this.prisma.inscricao.findUnique({ where: { time: horario } });
+    
+                if (!prismaHorario) throw new ForbiddenException("Don't exists this horario!");
+    
+                if (!hasInscricao) createdInscricoes.push(await this.prisma.inscricao.create({
+                    data: {
+                        aula: aula,
+                        aluno: { connect: { id: prismaUser.id } },
+                        horario: { connect: { id: prismaHorario.id } }
+                    }
+                }));
+            }
+        })();
+
+        return createdInscricoes;
     }
 
     async createLocal({ endereco, bairro }: LocalDto) {
@@ -175,6 +201,8 @@ export class AuthService {
     }
 
     async createInscricoes(inscricoes: any, user: User) {
+        const createdInscricoes = [];
+
         await (async () => {
             for (const inscricao of inscricoes) {
                 const horario = await this.prisma.horario.findUnique({ where: { time: inscricao.horario } });
@@ -183,15 +211,17 @@ export class AuthService {
 
                 const hasInscricao = await this.prisma.inscricao.findUnique({ where: { time: inscricao.horario } });
 
-                if (!hasInscricao) await this.prisma.inscricao.create({
+                if (!hasInscricao) createdInscricoes.push(await this.prisma.inscricao.create({
                     data: {
                         aula: inscricao.aula,
                         aluno: { connect: { id: user.id } },
                         horario: { connect: { id: horario.id } }
                     }
-                });
+                }));
             }
         })();
+
+        return createdInscricoes;
     }
 
     async refreshModalidade(aluno: any) {

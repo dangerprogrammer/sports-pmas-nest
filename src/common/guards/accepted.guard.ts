@@ -16,6 +16,6 @@ export class AcceptedGuard extends AuthGuard('accepted') {
 
         if (!prismaUser) return !1;
 
-        return prismaUser.accepted || !!prismaUser.roles.find(role => role == 'ADMIN');
+        return prismaUser.accepted;
     }
 }
