@@ -104,7 +104,8 @@ CREATE TABLE "solics" (
 
 -- CreateTable
 CREATE TABLE "Inscricao" (
-    "alunoId" SERIAL NOT NULL,
+    "alunoId" INTEGER,
+    "professorId" INTEGER,
     "aula" "Aula" NOT NULL,
     "time" TIMESTAMP(3) NOT NULL
 );
@@ -150,6 +151,12 @@ CREATE TABLE "_aluno_modalidade" (
 
 -- CreateTable
 CREATE TABLE "_AdminToSolic" (
+    "A" INTEGER NOT NULL,
+    "B" INTEGER NOT NULL
+);
+
+-- CreateTable
+CREATE TABLE "_professor_modalidade" (
     "A" INTEGER NOT NULL,
     "B" INTEGER NOT NULL
 );
@@ -221,6 +228,12 @@ CREATE UNIQUE INDEX "_AdminToSolic_AB_unique" ON "_AdminToSolic"("A", "B");
 CREATE INDEX "_AdminToSolic_B_index" ON "_AdminToSolic"("B");
 
 -- CreateIndex
+CREATE UNIQUE INDEX "_professor_modalidade_AB_unique" ON "_professor_modalidade"("A", "B");
+
+-- CreateIndex
+CREATE INDEX "_professor_modalidade_B_index" ON "_professor_modalidade"("B");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "_horario_modalidade_AB_unique" ON "_horario_modalidade"("A", "B");
 
 -- CreateIndex
@@ -245,7 +258,10 @@ ALTER TABLE "admins" ADD CONSTRAINT "admins_id_createdAt_updatedAt_nome_comp_fke
 ALTER TABLE "solics" ADD CONSTRAINT "solics_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Inscricao" ADD CONSTRAINT "Inscricao_alunoId_fkey" FOREIGN KEY ("alunoId") REFERENCES "alunos"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "Inscricao" ADD CONSTRAINT "Inscricao_alunoId_fkey" FOREIGN KEY ("alunoId") REFERENCES "alunos"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Inscricao" ADD CONSTRAINT "Inscricao_professorId_fkey" FOREIGN KEY ("professorId") REFERENCES "professors"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Inscricao" ADD CONSTRAINT "Inscricao_time_fkey" FOREIGN KEY ("time") REFERENCES "horarios"("time") ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -264,6 +280,12 @@ ALTER TABLE "_AdminToSolic" ADD CONSTRAINT "_AdminToSolic_A_fkey" FOREIGN KEY ("
 
 -- AddForeignKey
 ALTER TABLE "_AdminToSolic" ADD CONSTRAINT "_AdminToSolic_B_fkey" FOREIGN KEY ("B") REFERENCES "solics"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "_professor_modalidade" ADD CONSTRAINT "_professor_modalidade_A_fkey" FOREIGN KEY ("A") REFERENCES "modalidades"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "_professor_modalidade" ADD CONSTRAINT "_professor_modalidade_B_fkey" FOREIGN KEY ("B") REFERENCES "professors"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "_horario_modalidade" ADD CONSTRAINT "_horario_modalidade_A_fkey" FOREIGN KEY ("A") REFERENCES "horarios"("id") ON DELETE CASCADE ON UPDATE CASCADE;

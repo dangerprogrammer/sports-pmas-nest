@@ -54,7 +54,7 @@ model Aluno {
   bairro     String
   data_nasc  DateTime
   sexo       Gender
-  inscricoes Inscricao[] @relation("inscricoes")
+  inscricoes Inscricao[] @relation("inscricoes_aluno")
   atestados  Atestado[]  @relation("atestados")
   menor      AlunoMenor? @relation("menor")
 
@@ -109,6 +109,9 @@ model Professor {
   nome_comp String
   user      User     @relation("professor", fields: [id, createdAt, updatedAt, nome_comp], references: [id, createdAt, updatedAt, nome_comp])
 
+  modalidades Modalidade[] @relation("professor_modalidade")
+  inscricoes  Inscricao[]  @relation("inscricoes_professor")
+
   @@unique([id, createdAt, updatedAt, nome_comp])
   @@map("professors")
 }
@@ -139,8 +142,11 @@ model Solic {
 }
 
 model Inscricao {
-  alunoId Int   @default(autoincrement())
-  aluno   Aluno @relation("inscricoes", fields: [alunoId], references: [id])
+  alunoId Int?
+  aluno   Aluno? @relation("inscricoes_aluno", fields: [alunoId], references: [id])
+
+  professorId Int?
+  professor   Professor? @relation("inscricoes_professor", fields: [professorId], references: [id])
 
   aula    Aula
   time    DateTime @unique
@@ -152,9 +158,10 @@ model Modalidade {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  name     Aula      @unique
-  horarios Horario[] @relation("horario_modalidade")
-  alunos   Aluno[]   @relation("aluno_modalidade")
+  name        Aula        @unique
+  horarios    Horario[]   @relation("horario_modalidade")
+  alunos      Aluno[]     @relation("aluno_modalidade")
+  professores Professor[] @relation("professor_modalidade")
 
   endereco String     @default("Endereco...")
   bairro   String     @default("Bairro...")
