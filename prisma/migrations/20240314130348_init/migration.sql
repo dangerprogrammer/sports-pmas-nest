@@ -97,7 +97,6 @@ CREATE TABLE "admins" (
 CREATE TABLE "solics" (
     "id" SERIAL NOT NULL,
     "userId" INTEGER NOT NULL,
-    "desc" TEXT NOT NULL,
     "role" "Role" NOT NULL,
 
     CONSTRAINT "solics_pkey" PRIMARY KEY ("id")

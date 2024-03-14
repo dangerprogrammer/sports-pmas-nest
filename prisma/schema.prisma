@@ -133,7 +133,6 @@ model Solic {
   userId Int  @unique
   from   User @relation(fields: [userId], references: [id])
 
-  desc String
   role Role
 
   @@map("solics")
