@@ -7,18 +7,18 @@ import { GetCurrentUser, GetCurrentUserId, Public } from 'src/common/decorators'
 import { LocalDto } from './dto/local.dto';
 import { ModalidadeDto } from './dto/modalidade.dto';
 import { AcceptDto } from './dto/accept.dto';
-import { UpdateLocalDto, UpdateModalidadeDto } from './dto/updates.dto';
+import { UpdateLocalDto, UpdateModalidadeDto, UpdateUserDto } from './dto/updates.dto';
 import { InscricaoDto } from './dto/inscricao.dto';
 
 @Controller('auth')
 export class AuthController {
-    constructor (private authService: AuthService) {}
+    constructor (private auth: AuthService) {}
 
     @Public()
     @Post('local/signup')
     @HttpCode(HttpStatus.CREATED)
     signupLocal(@Body() dto: AuthDto): Promise<Tokens> {
-        return this.authService.signupLocal(dto);
+        return this.auth.signupLocal(dto);
     }
 
     @Public()
@@ -26,69 +26,75 @@ export class AuthController {
     @Post('local/signin')
     @HttpCode(HttpStatus.OK)
     signinLocal(@Body() dto: AuthDto): Promise<Tokens> {
-        return this.authService.signinLocal(dto);
+        return this.auth.signinLocal(dto);
     }
 
     @UseGuards(AlunoGuard)
     @Patch('aluno/inscricao')
     @HttpCode(HttpStatus.OK)
     subscribeUser(@Body() dto: InscricaoDto[], @Req() req: Request) {
-        return this.authService.subscribeUser(dto, req);
+        return this.auth.subscribeUser(dto, req);
     }
 
     @UseGuards(RoleGuard)
     @Post('create/local')
     @HttpCode(HttpStatus.CREATED)
     createLocal(@Body() dto: LocalDto) {
-        return this.authService.createLocal(dto);
+        return this.auth.createLocal(dto);
     }
 
     @UseGuards(RoleGuard)
     @Patch('update/local')
     @HttpCode(HttpStatus.CREATED)
     updateLocal(@Body() dto: UpdateLocalDto) {
-        return this.authService.updateLocal(dto);
+        return this.auth.updateLocal(dto);
     }
 
     @UseGuards(RoleGuard)
     @Delete('delete/local')
     @HttpCode(HttpStatus.ACCEPTED)
     deleteLocal(@Body() dto: LocalDto) {
-        return this.authService.deleteLocal(dto);
+        return this.auth.deleteLocal(dto);
     }
 
     @UseGuards(RoleGuard)
     @Post('create/modalidade')
     @HttpCode(HttpStatus.CREATED)
     createModalidade(@Body() dto: ModalidadeDto) {
-        return this.authService.createModalidade(dto);
+        return this.auth.createModalidade(dto);
     }
 
     @UseGuards(RoleGuard)
     @Patch('update/modalidade')
     @HttpCode(HttpStatus.CREATED)
     updateModalidade(@Body() dto: UpdateModalidadeDto) {
-        return this.authService.updateModalidade(dto);
+        return this.auth.updateModalidade(dto);
     }
 
     @UseGuards(RoleGuard)
     @Delete('delete/modalidade')
     @HttpCode(HttpStatus.ACCEPTED)
     deleteModalidade(@Body() dto: ModalidadeDto) {
-        return this.authService.deleteModalidade(dto);
+        return this.auth.deleteModalidade(dto);
     }
 
     @UseGuards(RoleGuard)
     @Post('user')
     @HttpCode(HttpStatus.ACCEPTED)
     acceptUser(@Body() dto: AcceptDto) {
-        return this.authService.acceptUser(dto);
+        return this.auth.acceptUser(dto);
+    }
+
+    @Patch('update/user')
+    @HttpCode(HttpStatus.CREATED)
+    updateUser(@Body() dto: UpdateUserDto) {
+        return this.auth.updateUser(dto);
     }
 
     @Post('logout')
     @HttpCode(HttpStatus.OK)
     logout(@GetCurrentUserId() userId: number) {
-        return this.authService.logout(userId);
+        return this.auth.logout(userId);
     }
 
     @Public()
@@ -96,6 +102,6 @@ export class AuthController {
     @Post('refresh')
     @HttpCode(HttpStatus.OK)
     refreshTokens(@GetCurrentUserId() userId: number, @GetCurrentUser('refreshToken') refreshToken: string) {
-        return this.authService.refreshTokens(userId, refreshToken);
+        return this.auth.refreshTokens(userId, refreshToken);
     }
 }

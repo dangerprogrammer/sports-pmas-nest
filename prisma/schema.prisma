@@ -20,7 +20,7 @@ model User {
 
   cpf       String @unique
   nome_comp String
-  roles     Role[] @default([ALUNO])
+  roles     Role[]
 
   aluno     Aluno?     @relation("aluno")
   professor Professor? @relation("professor")
@@ -33,7 +33,7 @@ model User {
   accepted Boolean? @default(false)
 
   @@unique(fields: [id, cpf, createdAt, updatedAt, nome_comp, accepted])
-  @@unique(fields: [id, createdAt, updatedAt, nome_comp])
+  @@unique(fields: [id, createdAt, updatedAt, nome_comp, accepted])
   @@unique(fields: [createdAt, updatedAt])
   @@map("users")
 }
@@ -107,12 +107,14 @@ model Professor {
   createdAt DateTime
   updatedAt DateTime
   nome_comp String
-  user      User     @relation("professor", fields: [id, createdAt, updatedAt, nome_comp], references: [id, createdAt, updatedAt, nome_comp])
+  user      User     @relation("professor", fields: [id, createdAt, updatedAt, nome_comp, accepted], references: [id, createdAt, updatedAt, nome_comp, accepted])
 
   modalidades Modalidade[] @relation("professor_modalidade")
   inscricoes  Inscricao[]  @relation("inscricoes_professor")
 
-  @@unique([id, createdAt, updatedAt, nome_comp])
+  accepted Boolean @default(false)
+
+  @@unique([id, createdAt, updatedAt, nome_comp, accepted])
   @@map("professors")
 }
 
@@ -121,11 +123,13 @@ model Admin {
   createdAt DateTime
   updatedAt DateTime
   nome_comp String
-  user      User     @relation("admin", fields: [id, createdAt, updatedAt, nome_comp], references: [id, createdAt, updatedAt, nome_comp])
+  user      User     @relation("admin", fields: [id, createdAt, updatedAt, nome_comp, accepted], references: [id, createdAt, updatedAt, nome_comp, accepted])
+
+  accepted Boolean @default(false)
 
   solics Solic[]
 
-  @@unique([id, createdAt, updatedAt, nome_comp])
+  @@unique([id, createdAt, updatedAt, nome_comp, accepted])
   @@map("admins")
 }
 
@@ -136,7 +140,7 @@ model Solic {
   userId Int  @unique
   from   User @relation(fields: [userId], references: [id])
 
-  role Role
+  roles Role[]
 
   @@map("solics")
 }

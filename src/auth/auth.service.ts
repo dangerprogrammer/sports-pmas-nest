@@ -8,7 +8,7 @@ import { Admin, Aluno, Professor, User } from '@prisma/client';
 import { LocalDto } from './dto/local.dto';
 import { ModalidadeDto } from './dto/modalidade.dto';
 import { AcceptDto } from './dto/accept.dto';
-import { UpdateLocalDto, UpdateModalidadeDto } from './dto/updates.dto';
+import { UpdateLocalDto, UpdateModalidadeDto, UpdateUserDto } from './dto/updates.dto';
 import { InscricaoDto } from './dto/inscricao.dto';
 
 @Injectable()
@@ -73,9 +73,9 @@ export class AuthService {
             for (const { aula, horario } of inscricoes) {
                 const prismaHorario = await this.prisma.horario.findUnique({ where: { time: horario } });
                 const hasInscricao = await this.prisma.inscricao.findUnique({ where: { time: horario } });
-    
+
                 if (!prismaHorario) throw new ForbiddenException("Don't exists this horario!");
-    
+
                 if (!hasInscricao) createdInscricoes.push(await this.prisma.inscricao.create({
                     data: {
                         aula: aula,
@@ -99,13 +99,13 @@ export class AuthService {
         return localidade;
     }
 
-    async updateLocal({ local: { endereco: oldEndereco, bairro: oldBairro }, update }: UpdateLocalDto) {
-        const local = await this.prisma.localidade.findUnique({ where: { endereco: oldEndereco, bairro: oldBairro } });
+    async updateLocal({ local: { endereco, bairro }, update }: UpdateLocalDto) {
+        const local = await this.prisma.localidade.findUnique({ where: { endereco, bairro } });
 
-        if (local) await this.prisma.localidade.update({ where: { endereco: oldEndereco, bairro: oldBairro }, data: update });
+        if (local) await this.prisma.localidade.update({ where: { endereco, bairro }, data: update });
         else throw new ForbiddenException("Local not found");
 
-        return await this.prisma.localidade.findMany();
+        return await this.prisma.localidade.findUnique({ where: { endereco, bairro } });
     }
 
     async deleteLocal(local: LocalDto) {
@@ -147,7 +147,7 @@ export class AuthService {
         if (modalidade) await this.prisma.modalidade.update({ where: { name }, data: { ...update, local, horarios } });
         else throw new ForbiddenException("Modalidade not found");
 
-        return await this.prisma.modalidade.findMany();
+        return await this.prisma.modalidade.findUnique({ where: { name } });
     }
 
     async deleteModalidade({ name }: ModalidadeDto) {
@@ -162,8 +162,26 @@ export class AuthService {
         const user = await this.prisma.user.findUnique({ where: { cpf } });
 
         if (!user) throw new ForbiddenException("Don't has user!");
+        if (user.accepted) return !0;
 
-        return await this.prisma.user.update({ where: { cpf }, data: { accepted } });
+        if (accepted) {
+            const { roles } = await this.prisma.solic.findUnique({ where: { userId: user.id } });
+
+            return await this.prisma.user.update({ where: { cpf }, data: { roles, accepted } });
+        } else {
+            await this.prisma.solic.deleteMany({ where: { userId: user.id } });
+
+            return !1;
+        };
+    }
+
+    async updateUser({ cpf, update }: UpdateUserDto) {
+        const user = await this.prisma.user.findUnique({ where: { cpf } });
+
+        if (user) await this.prisma.user.update({ where: { cpf }, data: update });
+        else throw new ForbiddenException("User not found");
+
+        return await this.prisma.user.findUnique({ where: { cpf } });
     }
 
     async logout(userId: number) {
@@ -268,7 +286,8 @@ export class AuthService {
         })();
 
         if (solic) {
-            const adminsID = (await this.prisma.admin.findMany()).map(({ id }) => { return { id } });
+            const admins = await this.prisma.admin.findMany({ where: { accepted: !0 } });
+            const adminsID = admins.map(({ id }) => { return { id } });
 
             await this.prisma.solic.create({
                 data: { ...solic, toAdmins: { connect: adminsID }, from: { connect: { id: user.id } } }
