@@ -78,7 +78,7 @@ export class AuthService {
 
                 if (!hasInscricao) createdInscricoes.push(await this.prisma.inscricao.create({
                     data: {
-                        aula: aula,
+                        aula,
                         aluno: { connect: { id: prismaUser.id } },
                         horario: { connect: { id: prismaHorario.id } }
                     }
@@ -267,8 +267,17 @@ export class AuthService {
     async updateUserRoles(user: User, aluno: any, professor: any, admin: any, solic: any) {
         const { data, include }: { data: any, include: any } = { data: {}, include: {} };
 
+        if (solic) {
+            const admins = await this.prisma.admin.findMany({ where: { accepted: !0 } });
+            const adminsID = admins.map(({ id }) => { return { id } });
+
+            await this.prisma.solic.create({
+                data: { ...solic, toAdmins: { connect: adminsID }, from: { connect: { id: user.id } } }
+            });
+        };
+
         await (async () => {
-            for (const role of user.roles) {
+            for (const role of solic.roles) {
                 const lower = role.toLowerCase();
                 let create = eval(lower);
 
@@ -278,21 +287,13 @@ export class AuthService {
 
                     data[lower] = 'inscricoes' in create ? { create: { ...create, inscricoes: {} } } : { create };
 
-                    await this.prisma.user.update({ where: { id: user.id }, data, include });
-
                     if ('inscricoes' in create) await this.createInscricoes(create['inscricoes'], user);
                 };
-            }
+            };
+
+            console.log({ data, include });
+            await this.prisma.user.update({ where: { id: user.id }, data, include });
         })();
-
-        if (solic) {
-            const admins = await this.prisma.admin.findMany({ where: { accepted: !0 } });
-            const adminsID = admins.map(({ id }) => { return { id } });
-
-            await this.prisma.solic.create({
-                data: { ...solic, toAdmins: { connect: adminsID }, from: { connect: { id: user.id } } }
-            });
-        };
 
         return await this.prisma.user.findUnique({ where: { id: user.id } });
     }
