@@ -49,6 +49,7 @@ export class AuthService {
     }
 
     async signinLocal({ password, cpf }: AuthDto): Promise<Tokens> {
+        console.log(cpf);
         const user = await this.prisma.user.findUnique({ where: { cpf } });
 
         if (!user) throw new ForbiddenException("Access Denied");
@@ -167,6 +168,8 @@ export class AuthService {
         if (accepted) {
             const { roles } = await this.prisma.solic.findUnique({ where: { userId: user.id } });
 
+            await this.prisma.solic.deleteMany({ where: { userId: user.id } });
+
             return await this.prisma.user.update({ where: { cpf }, data: { roles, accepted } });
         } else {
             await this.prisma.solic.deleteMany({ where: { userId: user.id } });
@@ -203,9 +206,11 @@ export class AuthService {
             where: {
                 id: userId
             }
-        })
+        });
 
         if (!user || !user.hashedRt) throw new ForbiddenException("Access Denied");
+
+        rt = rt.split(' ')[rt.split(' ').length - 1];
 
         const rtMatches = await bcrypt.compare(rt, user.hashedRt);
 
