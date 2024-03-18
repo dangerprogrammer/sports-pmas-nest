@@ -2,7 +2,7 @@ import { Body, Controller, Delete, HttpCode, HttpStatus, Patch, Post, Req, UseGu
 import { AuthService } from './auth.service';
 import { AuthDto } from './dto/auth.dto';
 import { Tokens } from './types';
-import { AcceptedGuard, RoleGuard, RtGuard, AlunoGuard } from 'src/common/guards';
+import { RoleGuard, RtGuard, AlunoGuard } from 'src/common/guards';
 import { GetCurrentUser, GetCurrentUserId, Public } from 'src/common/decorators';
 import { LocalDto } from './dto/local.dto';
 import { ModalidadeDto } from './dto/modalidade.dto';
@@ -22,7 +22,6 @@ export class AuthController {
     }
 
     @Public()
-    @UseGuards(AcceptedGuard)
     @Post('local/signin')
     @HttpCode(HttpStatus.OK)
     signinLocal(@Body() dto: AuthDto): Promise<Tokens> {
