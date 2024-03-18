@@ -172,10 +172,6 @@ export class AuthService {
             return await this.prisma.user.update({ where: { cpf }, data: { roles, accepted } });
         } else {
             await this.prisma.solic.deleteMany({ where: { userId: user.id } });
-            await this.prisma.aluno.deleteMany({ where: { id: user.id } });
-            await this.prisma.professor.deleteMany({ where: { id: user.id } });
-            await this.prisma.admin.deleteMany({ where: { id: user.id } });
-            await this.prisma.user.deleteMany({ where: { id: user.id } });
 
             return !1;
         };
