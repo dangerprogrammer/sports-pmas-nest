@@ -10,7 +10,7 @@ export class PrismaService
         super({
             datasources: {
                 db: {
-                    url: 'postgresql://sports-pmas_owner:K6sdWBvrgS0h@ep-silent-glitter-a5wqgklw-pooler.us-east-2.aws.neon.tech/sports-pmas?sslmode=require'
+                    url: 'postgresql://danger:123@localhost:5432/nestjs?schema=public'
                 }
             }
         })

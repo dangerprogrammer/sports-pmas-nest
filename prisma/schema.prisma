@@ -20,6 +20,8 @@ model User {
 
   cpf       String @unique
   nome_comp String
+  email     String
+  tel       String
   roles     Role[]
 
   aluno     Aluno?     @relation("aluno")
@@ -32,8 +34,8 @@ model User {
   solic    Solic?
   accepted Boolean? @default(false)
 
-  @@unique(fields: [id, cpf, createdAt, updatedAt, nome_comp, accepted])
-  @@unique(fields: [id, createdAt, updatedAt, nome_comp, accepted])
+  @@unique(fields: [id, cpf, createdAt, updatedAt, nome_comp, email, tel, accepted])
+  @@unique(fields: [id, createdAt, updatedAt, nome_comp, email, tel, accepted])
   @@unique(fields: [createdAt, updatedAt])
   @@map("users")
 }
@@ -42,7 +44,7 @@ model Aluno {
   id        Int      @id
   createdAt DateTime
   updatedAt DateTime
-  user      User     @relation("aluno", fields: [id, cpf, createdAt, updatedAt, nome_comp, accepted], references: [id, cpf, createdAt, updatedAt, nome_comp, accepted])
+  user      User     @relation("aluno", fields: [id, cpf, createdAt, updatedAt, nome_comp, email, tel, accepted], references: [id, cpf, createdAt, updatedAt, nome_comp, email, tel, accepted])
 
   modalidades Modalidade[] @relation("aluno_modalidade")
 
@@ -60,7 +62,7 @@ model Aluno {
 
   accepted Boolean @default(false)
 
-  @@unique([id, cpf, createdAt, updatedAt, nome_comp, accepted])
+  @@unique([id, cpf, createdAt, updatedAt, nome_comp, email, tel, accepted])
   @@unique([id, createdAt, updatedAt, accepted])
   @@map("alunos")
 }
@@ -107,14 +109,16 @@ model Professor {
   createdAt DateTime
   updatedAt DateTime
   nome_comp String
-  user      User     @relation("professor", fields: [id, createdAt, updatedAt, nome_comp, accepted], references: [id, createdAt, updatedAt, nome_comp, accepted])
+  email     String
+  tel       String
+  user      User     @relation("professor", fields: [id, createdAt, updatedAt, nome_comp, email, tel, accepted], references: [id, createdAt, updatedAt, nome_comp, email, tel, accepted])
 
   modalidades Modalidade[] @relation("professor_modalidade")
   inscricoes  Inscricao[]  @relation("inscricoes_professor")
 
   accepted Boolean @default(false)
 
-  @@unique([id, createdAt, updatedAt, nome_comp, accepted])
+  @@unique([id, createdAt, updatedAt, nome_comp, email, tel, accepted])
   @@map("professors")
 }
 
@@ -123,13 +127,15 @@ model Admin {
   createdAt DateTime
   updatedAt DateTime
   nome_comp String
-  user      User     @relation("admin", fields: [id, createdAt, updatedAt, nome_comp, accepted], references: [id, createdAt, updatedAt, nome_comp, accepted])
+  email     String
+  tel       String
+  user      User     @relation("admin", fields: [id, createdAt, updatedAt, nome_comp, email, tel, accepted], references: [id, createdAt, updatedAt, nome_comp, email, tel, accepted])
 
   accepted Boolean @default(false)
 
   solics Solic[]
 
-  @@unique([id, createdAt, updatedAt, nome_comp, accepted])
+  @@unique([id, createdAt, updatedAt, nome_comp, email, tel, accepted])
   @@map("admins")
 }
 
