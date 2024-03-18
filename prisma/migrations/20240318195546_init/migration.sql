@@ -17,6 +17,8 @@ CREATE TABLE "users" (
     "updatedAt" TIMESTAMP(3) NOT NULL,
     "cpf" TEXT NOT NULL,
     "nome_comp" TEXT NOT NULL,
+    "email" TEXT NOT NULL,
+    "tel" TEXT NOT NULL,
     "roles" "Role"[],
     "hash" TEXT NOT NULL,
     "hashedRt" TEXT,
@@ -79,6 +81,8 @@ CREATE TABLE "professors" (
     "createdAt" TIMESTAMP(3) NOT NULL,
     "updatedAt" TIMESTAMP(3) NOT NULL,
     "nome_comp" TEXT NOT NULL,
+    "email" TEXT NOT NULL,
+    "tel" TEXT NOT NULL,
     "accepted" BOOLEAN NOT NULL DEFAULT false,
 
     CONSTRAINT "professors_pkey" PRIMARY KEY ("id")
@@ -90,6 +94,8 @@ CREATE TABLE "admins" (
     "createdAt" TIMESTAMP(3) NOT NULL,
     "updatedAt" TIMESTAMP(3) NOT NULL,
     "nome_comp" TEXT NOT NULL,
+    "email" TEXT NOT NULL,
+    "tel" TEXT NOT NULL,
     "accepted" BOOLEAN NOT NULL DEFAULT false,
 
     CONSTRAINT "admins_pkey" PRIMARY KEY ("id")
@@ -173,16 +179,16 @@ CREATE TABLE "_horario_modalidade" (
 CREATE UNIQUE INDEX "users_cpf_key" ON "users"("cpf");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "users_id_cpf_createdAt_updatedAt_nome_comp_accepted_key" ON "users"("id", "cpf", "createdAt", "updatedAt", "nome_comp", "accepted");
+CREATE UNIQUE INDEX "users_id_cpf_createdAt_updatedAt_nome_comp_email_tel_accept_key" ON "users"("id", "cpf", "createdAt", "updatedAt", "nome_comp", "email", "tel", "accepted");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "users_id_createdAt_updatedAt_nome_comp_accepted_key" ON "users"("id", "createdAt", "updatedAt", "nome_comp", "accepted");
+CREATE UNIQUE INDEX "users_id_createdAt_updatedAt_nome_comp_email_tel_accepted_key" ON "users"("id", "createdAt", "updatedAt", "nome_comp", "email", "tel", "accepted");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "users_createdAt_updatedAt_key" ON "users"("createdAt", "updatedAt");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "alunos_id_cpf_createdAt_updatedAt_nome_comp_accepted_key" ON "alunos"("id", "cpf", "createdAt", "updatedAt", "nome_comp", "accepted");
+CREATE UNIQUE INDEX "alunos_id_cpf_createdAt_updatedAt_nome_comp_email_tel_accep_key" ON "alunos"("id", "cpf", "createdAt", "updatedAt", "nome_comp", "email", "tel", "accepted");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "alunos_id_createdAt_updatedAt_accepted_key" ON "alunos"("id", "createdAt", "updatedAt", "accepted");
@@ -194,10 +200,10 @@ CREATE UNIQUE INDEX "atestados_id_createdAt_updatedAt_accepted_key" ON "atestado
 CREATE UNIQUE INDEX "aluno_menors_id_createdAt_updatedAt_accepted_key" ON "aluno_menors"("id", "createdAt", "updatedAt", "accepted");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "professors_id_createdAt_updatedAt_nome_comp_accepted_key" ON "professors"("id", "createdAt", "updatedAt", "nome_comp", "accepted");
+CREATE UNIQUE INDEX "professors_id_createdAt_updatedAt_nome_comp_email_tel_accep_key" ON "professors"("id", "createdAt", "updatedAt", "nome_comp", "email", "tel", "accepted");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "admins_id_createdAt_updatedAt_nome_comp_accepted_key" ON "admins"("id", "createdAt", "updatedAt", "nome_comp", "accepted");
+CREATE UNIQUE INDEX "admins_id_createdAt_updatedAt_nome_comp_email_tel_accepted_key" ON "admins"("id", "createdAt", "updatedAt", "nome_comp", "email", "tel", "accepted");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "solics_userId_key" ON "solics"("userId");
@@ -242,7 +248,7 @@ CREATE UNIQUE INDEX "_horario_modalidade_AB_unique" ON "_horario_modalidade"("A"
 CREATE INDEX "_horario_modalidade_B_index" ON "_horario_modalidade"("B");
 
 -- AddForeignKey
-ALTER TABLE "alunos" ADD CONSTRAINT "alunos_id_cpf_createdAt_updatedAt_nome_comp_accepted_fkey" FOREIGN KEY ("id", "cpf", "createdAt", "updatedAt", "nome_comp", "accepted") REFERENCES "users"("id", "cpf", "createdAt", "updatedAt", "nome_comp", "accepted") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "alunos" ADD CONSTRAINT "alunos_id_cpf_createdAt_updatedAt_nome_comp_email_tel_acce_fkey" FOREIGN KEY ("id", "cpf", "createdAt", "updatedAt", "nome_comp", "email", "tel", "accepted") REFERENCES "users"("id", "cpf", "createdAt", "updatedAt", "nome_comp", "email", "tel", "accepted") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "atestados" ADD CONSTRAINT "atestados_id_createdAt_updatedAt_accepted_fkey" FOREIGN KEY ("id", "createdAt", "updatedAt", "accepted") REFERENCES "alunos"("id", "createdAt", "updatedAt", "accepted") ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -251,10 +257,10 @@ ALTER TABLE "atestados" ADD CONSTRAINT "atestados_id_createdAt_updatedAt_accepte
 ALTER TABLE "aluno_menors" ADD CONSTRAINT "aluno_menors_id_createdAt_updatedAt_accepted_fkey" FOREIGN KEY ("id", "createdAt", "updatedAt", "accepted") REFERENCES "alunos"("id", "createdAt", "updatedAt", "accepted") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "professors" ADD CONSTRAINT "professors_id_createdAt_updatedAt_nome_comp_accepted_fkey" FOREIGN KEY ("id", "createdAt", "updatedAt", "nome_comp", "accepted") REFERENCES "users"("id", "createdAt", "updatedAt", "nome_comp", "accepted") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "professors" ADD CONSTRAINT "professors_id_createdAt_updatedAt_nome_comp_email_tel_acce_fkey" FOREIGN KEY ("id", "createdAt", "updatedAt", "nome_comp", "email", "tel", "accepted") REFERENCES "users"("id", "createdAt", "updatedAt", "nome_comp", "email", "tel", "accepted") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "admins" ADD CONSTRAINT "admins_id_createdAt_updatedAt_nome_comp_accepted_fkey" FOREIGN KEY ("id", "createdAt", "updatedAt", "nome_comp", "accepted") REFERENCES "users"("id", "createdAt", "updatedAt", "nome_comp", "accepted") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "admins" ADD CONSTRAINT "admins_id_createdAt_updatedAt_nome_comp_email_tel_accepted_fkey" FOREIGN KEY ("id", "createdAt", "updatedAt", "nome_comp", "email", "tel", "accepted") REFERENCES "users"("id", "createdAt", "updatedAt", "nome_comp", "email", "tel", "accepted") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "solics" ADD CONSTRAINT "solics_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;

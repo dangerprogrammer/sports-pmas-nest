@@ -14,6 +14,14 @@ export class AuthDto {
     @IsString()
     nome_comp: string;
 
+    @IsNotEmpty()
+    @IsString()
+    tel: string;
+
+    @IsNotEmpty()
+    @IsString()
+    email: string;
+
     aluno?: Aluno | string;
     professor?: Professor | string;
     admin?: Admin | string;
