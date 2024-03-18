@@ -5,7 +5,7 @@ import * as bcrypt from 'bcrypt';
 import { Tokens } from './types';
 import { JwtService } from '@nestjs/jwt';
 import { Admin, Aluno, Professor, User } from '@prisma/client';
-import { LocalDto } from './dto/local.dto';;
+import { LocalDto } from './dto/local.dto';
 import { ModalidadeDto } from './dto/modalidade.dto';
 import { AcceptDto } from './dto/accept.dto';
 import { UpdateLocalDto, UpdateModalidadeDto, UpdateUserDto } from './dto/updates.dto';
