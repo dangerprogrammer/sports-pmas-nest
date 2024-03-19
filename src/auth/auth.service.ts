@@ -1,6 +1,6 @@
 import { ForbiddenException, Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { AuthDto } from './dto/auth.dto';
+import { SigninDto, SignupDto } from './dto/auth.dto';
 import * as bcrypt from 'bcrypt';
 import { Tokens } from './types';
 import { JwtService } from '@nestjs/jwt';
@@ -10,6 +10,7 @@ import { ModalidadeDto } from './dto/modalidade.dto';
 import { AcceptDto } from './dto/accept.dto';
 import { UpdateLocalDto, UpdateModalidadeDto, UpdateUserDto } from './dto/updates.dto';
 import { InscricaoDto } from './dto/inscricao.dto';
+import { SolicDto } from './dto/solic.dto';
 
 @Injectable()
 export class AuthService {
@@ -30,10 +31,10 @@ export class AuthService {
         private jwtService: JwtService
     ) { }
 
-    async signupLocal({ password, cpf, roles, nome_comp, aluno, professor, admin, solic }: AuthDto): Promise<Tokens> {
+    async signupLocal({ password, aluno, professor, admin, solic, ...data }: SignupDto): Promise<Tokens> {
         const hash = await this.hashData(password);
 
-        let newUser = await this.prisma.user.create({ data: { cpf, roles, nome_comp, hash } });
+        let newUser = await this.prisma.user.create({ data: { ...data, hash } });
 
         newUser = await this.updateUserRoles(newUser, aluno, professor, admin, solic);
 
@@ -48,7 +49,7 @@ export class AuthService {
         return tokens;
     }
 
-    async signinLocal({ password, cpf }: AuthDto): Promise<Tokens> {
+    async signinLocal({ password, cpf }: SigninDto): Promise<Tokens> {
         const user = await this.prisma.user.findUnique({ where: { cpf } });
 
         if (!user) throw new ForbiddenException("Access Denied");
@@ -186,26 +187,29 @@ export class AuthService {
         return await this.prisma.user.findUnique({ where: { cpf } });
     }
 
+    async createSolic({ cpf, roles }: SolicDto) {
+        const user = await this.prisma.user.findUnique({ where: { cpf } });
+        
+        const admins = await this.prisma.admin.findMany({ where: { accepted: !0 } });
+        const adminsID = admins.map(({ id }) => { return { id } });
+
+        return await this.prisma.solic.create({
+            data: {roles, toAdmins: { connect: adminsID }, from: { connect: { id: user.id } }}
+        });
+    }
+
     async logout(userId: number) {
         await this.prisma.user.updateMany({
             where: {
                 id: userId,
-                hashedRt: {
-                    not: null
-                }
+                hashedRt: { not: null }
             },
-            data: {
-                hashedRt: null
-            }
-        })
+            data: { hashedRt: null }
+        });
     }
 
     async refreshTokens(userId: number, rt: string) {
-        const user = await this.prisma.user.findUnique({
-            where: {
-                id: userId
-            }
-        });
+        const user = await this.prisma.user.findUnique({ where: { id: userId } });
 
         if (!user || !user.hashedRt) throw new ForbiddenException("Access Denied");
 
@@ -305,13 +309,9 @@ export class AuthService {
         const hash = await this.hashData(rt);
 
         await this.prisma.user.update({
-            where: {
-                id: userId
-            },
-            data: {
-                hashedRt: hash
-            }
-        })
+            where: { id: userId },
+            data: { hashedRt: hash }
+        });
     }
 
     hashData(data: string) {
@@ -334,9 +334,6 @@ export class AuthService {
             })
         ]);
 
-        return {
-            access_token: at,
-            refresh_token: rt
-        }
+        return { access_token: at, refresh_token: rt };
     }
 }

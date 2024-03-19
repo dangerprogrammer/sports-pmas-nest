@@ -1,6 +1,6 @@
 import { Body, Controller, Delete, HttpCode, HttpStatus, Patch, Post, Req, UseGuards } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { AuthDto } from './dto/auth.dto';
+import { SigninDto, SignupDto } from './dto/auth.dto';
 import { Tokens } from './types';
 import { RoleGuard, RtGuard, AlunoGuard } from 'src/common/guards';
 import { GetCurrentUser, GetCurrentUserId, Public } from 'src/common/decorators';
@@ -9,6 +9,7 @@ import { ModalidadeDto } from './dto/modalidade.dto';
 import { AcceptDto } from './dto/accept.dto';
 import { UpdateLocalDto, UpdateModalidadeDto, UpdateUserDto } from './dto/updates.dto';
 import { InscricaoDto } from './dto/inscricao.dto';
+import { SolicDto } from './dto/solic.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -17,14 +18,14 @@ export class AuthController {
     @Public()
     @Post('local/signup')
     @HttpCode(HttpStatus.CREATED)
-    signupLocal(@Body() dto: AuthDto): Promise<Tokens> {
+    signupLocal(@Body() dto: SignupDto): Promise<Tokens> {
         return this.auth.signupLocal(dto);
     }
 
     @Public()
     @Post('local/signin')
     @HttpCode(HttpStatus.OK)
-    signinLocal(@Body() dto: AuthDto): Promise<Tokens> {
+    signinLocal(@Body() dto: SigninDto): Promise<Tokens> {
         return this.auth.signinLocal(dto);
     }
 
@@ -88,6 +89,13 @@ export class AuthController {
     @HttpCode(HttpStatus.CREATED)
     updateUser(@Body() dto: UpdateUserDto) {
         return this.auth.updateUser(dto);
+    }
+
+    @Public()
+    @Patch('create/solic')
+    @HttpCode(HttpStatus.CREATED)
+    createSolic(@Body() dto: SolicDto) {
+        return this.auth.createSolic(dto);
     }
 
     @Post('logout')
