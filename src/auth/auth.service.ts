@@ -189,13 +189,17 @@ export class AuthService {
 
     async createSolic({ cpf, roles }: SolicDto) {
         const user = await this.prisma.user.findUnique({ where: { cpf } });
-        
+
         const admins = await this.prisma.admin.findMany({ where: { accepted: !0 } });
         const adminsID = admins.map(({ id }) => { return { id } });
 
-        return await this.prisma.solic.create({
-            data: {roles, toAdmins: { connect: adminsID }, from: { connect: { id: user.id } }}
+        const hasSolic = await this.prisma.solic.findUnique({ where: { userId: user.id } });
+
+        if (!(user.accepted || hasSolic)) await this.prisma.solic.create({
+            data: { roles, toAdmins: { connect: adminsID }, from: { connect: { id: user.id } } }
         });
+
+        return user.accepted || hasSolic || { text: 'Criada com sucesso!' };
     }
 
     async logout(userId: number) {
@@ -263,6 +267,7 @@ export class AuthService {
                 if (!modalidade) throw new ForbiddenException(`Don't exists modalidade "${inscricao}"`);
                 if (alunosID.length > modalidade.vagas) throw new ForbiddenException(`Ah não! Esta modalidade já está lotada! (Max: ${modalidade.vagas})`);
 
+                modalidade.full = alunosID.length == modalidade.vagas;
                 await this.prisma.modalidade.update({ where: { name: inscricao.aula }, data: { alunos: { connect: alunosID } } });
             };
         })();

@@ -104,6 +104,8 @@ CREATE TABLE "admins" (
 -- CreateTable
 CREATE TABLE "solics" (
     "id" SERIAL NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
     "userId" INTEGER NOT NULL,
     "roles" "Role"[],
 
@@ -127,6 +129,7 @@ CREATE TABLE "modalidades" (
     "endereco" TEXT NOT NULL DEFAULT 'Endereco...',
     "bairro" TEXT NOT NULL DEFAULT 'Bairro...',
     "vagas" INTEGER DEFAULT 15,
+    "full" BOOLEAN NOT NULL DEFAULT false,
 
     CONSTRAINT "modalidades_pkey" PRIMARY KEY ("id")
 );

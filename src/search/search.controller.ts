@@ -27,6 +27,12 @@ export class SearchController {
     }
 
     @Public()
+    @Get('modalidades')
+    searchModalidades() {
+        return this.search.searchModalidades();
+    }
+
+    @Public()
     @Get('token')
     findUserByToken(@Headers('authorization') auth: string) {
         return this.search.findUserByToken(auth);

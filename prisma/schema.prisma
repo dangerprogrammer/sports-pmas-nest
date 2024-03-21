@@ -140,8 +140,10 @@ model Admin {
 }
 
 model Solic {
-  id       Int     @id @default(autoincrement())
-  toAdmins Admin[]
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  toAdmins  Admin[]
 
   userId Int  @unique
   from   User @relation(fields: [userId], references: [id])
@@ -177,7 +179,8 @@ model Modalidade {
   bairro   String     @default("Bairro...")
   local    Localidade @relation("local_modalidade", fields: [endereco, bairro], references: [endereco, bairro])
 
-  vagas Int? @default(15)
+  vagas Int?    @default(15)
+  full  Boolean @default(false)
 
   @@map("modalidades")
 }

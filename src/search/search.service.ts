@@ -30,6 +30,12 @@ export class SearchService {
         return solics;
     }
 
+    async searchModalidades() {
+        const availableModalidades = await this.prisma.modalidade.findMany({ where: { full: !1 } });
+
+        return availableModalidades;
+    }
+
     async findUserByToken(auth: string) {
         const token = auth.split(' ')[1];
         const decodedToken = jwt.verify(token, 'at-secret') as any;
