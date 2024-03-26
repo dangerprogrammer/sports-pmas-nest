@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import * as jwt from 'jsonwebtoken';
+import { $Enums } from '@prisma/client';
 
 @Injectable()
 export class SearchService {
@@ -31,9 +32,25 @@ export class SearchService {
     }
 
     async searchModalidades() {
-        const availableModalidades = await this.prisma.modalidade.findMany({ where: { full: !1 } });
+        const availableModalidades = await this.prisma.modalidade.findMany({
+            where: {
+                available: {
+                    gt: 0
+                }
+            }
+        });
 
         return availableModalidades;
+    }
+
+    async searchHorarios(modName: $Enums.Aula) {
+        const horariosFromMod = (await this.prisma.horario.findMany({
+            where: {
+                modalidades: { some: { name: modName } }
+            }
+        })).sort(({ id: idA }, { id: idB }) => idA - idB);
+
+        return horariosFromMod;
     }
 
     async findUserByToken(auth: string) {

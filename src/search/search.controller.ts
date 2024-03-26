@@ -1,6 +1,7 @@
 import { Controller, Get, Headers, Param, Req } from '@nestjs/common';
 import { SearchService } from './search.service';
 import { Public } from 'src/common/decorators';
+import { $Enums } from '@prisma/client';
 
 @Controller('search')
 export class SearchController {
@@ -30,6 +31,12 @@ export class SearchController {
     @Get('modalidades')
     searchModalidades() {
         return this.search.searchModalidades();
+    }
+
+    @Public()
+    @Get('horarios/:modName')
+    searchHorarios(@Param('modName') modName: $Enums.Aula) {
+        return this.search.searchHorarios(modName);
     }
 
     @Public()

@@ -129,7 +129,7 @@ CREATE TABLE "modalidades" (
     "endereco" TEXT NOT NULL DEFAULT 'Endereco...',
     "bairro" TEXT NOT NULL DEFAULT 'Bairro...',
     "vagas" INTEGER DEFAULT 15,
-    "full" BOOLEAN NOT NULL DEFAULT false,
+    "available" INTEGER NOT NULL DEFAULT 15,
 
     CONSTRAINT "modalidades_pkey" PRIMARY KEY ("id")
 );

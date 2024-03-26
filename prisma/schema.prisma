@@ -179,8 +179,8 @@ model Modalidade {
   bairro   String     @default("Bairro...")
   local    Localidade @relation("local_modalidade", fields: [endereco, bairro], references: [endereco, bairro])
 
-  vagas Int?    @default(15)
-  full  Boolean @default(false)
+  vagas     Int? @default(15)
+  available Int  @default(15)
 
   @@map("modalidades")
 }
