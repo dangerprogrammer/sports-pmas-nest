@@ -32,13 +32,7 @@ export class SearchService {
     }
 
     async searchModalidades() {
-        const availableModalidades = await this.prisma.modalidade.findMany({
-            where: {
-                available: {
-                    gt: 0
-                }
-            }
-        });
+        const availableModalidades = await this.prisma.modalidade.findMany();
 
         return availableModalidades;
     }

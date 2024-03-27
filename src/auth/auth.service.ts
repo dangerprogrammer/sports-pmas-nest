@@ -31,7 +31,7 @@ export class AuthService {
         private jwtService: JwtService
     ) { }
 
-    async signupLocal({ password, aluno, professor, admin, solic, ...data }: SignupDto): Promise<Tokens> {
+    async signupLocal({ password, aluno, professor, admin, solic, inscricoes, ...data }: SignupDto): Promise<Tokens> {
         const hash = await this.hashData(password);
 
         let newUser = await this.prisma.user.create({ data: { ...data, hash } });
@@ -194,7 +194,9 @@ export class AuthService {
             data: { roles, toAdmins: { connect: adminsID }, from: { connect: { id: user.id } } }
         });
 
-        return user.accepted || hasSolic || { text: 'Criada com sucesso!' };
+        const solicNotif = { backAPI: !0, submitAction: 'goLogin', text: 'Solicitação criada com sucesso!' };
+
+        return user.accepted || hasSolic || solicNotif;
     }
 
     async logout(userId: number) {
