@@ -4,7 +4,7 @@ import { SigninDto, SignupDto } from './dto/auth.dto';
 import * as bcrypt from 'bcrypt';
 import { Tokens } from './types';
 import { JwtService } from '@nestjs/jwt';
-import { Admin, Aluno, Professor, User } from '@prisma/client';
+import { Admin, Aluno, Professor, Solic, User } from '@prisma/client';
 import { LocalDto } from './dto/local.dto';
 import { ModalidadeDto } from './dto/modalidade.dto';
 import { AcceptDto } from './dto/accept.dto';
@@ -38,7 +38,7 @@ export class AuthService {
 
         newUser = await this.updateUserRoles(newUser, aluno, professor, admin, solic);
 
-        const isAluno = await this.prisma.aluno.findUnique({ where: newUser });
+        const isAluno = await this.prisma.aluno.findUnique({ where: { id: newUser.id } });
 
         if (isAluno) await this.refreshModalidade(isAluno);
 
@@ -69,7 +69,7 @@ export class AuthService {
         const { user } = req;
         const prismaUser = await this.prisma.aluno.findUnique({ where: { id: user.sub } });
 
-        return this.createInscricoes(inscricoes, prismaUser as unknown as User);
+        return this.createInscricoes(inscricoes, prismaUser);
     }
 
     async createLocal(local: LocalDto) {
@@ -227,7 +227,7 @@ export class AuthService {
         return tokens;
     }
 
-    async createInscricoes(inscricoes: InscricaoDto[], user: User) {
+    async createInscricoes(inscricoes: InscricaoDto[], { id }: Aluno) {
         const createdInscricoes = [];
 
         await (async () => {
@@ -238,8 +238,8 @@ export class AuthService {
 
                 createdInscricoes.push(await this.prisma.inscricao.upsert({
                     where: { time: horario },
-                    update: { aluno: { connect: user }, horario: { connect: prismaHorario } },
-                    create: { aula, aluno: { connect: user }, horario: { connect: prismaHorario } }
+                    update: { aluno: { connect: { id } }, horario: { connect: prismaHorario } },
+                    create: { aula, aluno: { connect: { id } }, horario: { connect: prismaHorario } }
                 }));
             }
         })();
@@ -268,7 +268,7 @@ export class AuthService {
         })();
     }
 
-    async updateUserRoles(user: User, aluno: any, professor: any, admin: any, solic: any) {
+    async updateUserRoles(user: User, aluno: Aluno, professor: Professor, admin: Admin, solic: Solic) {
         const { data, include }: { data: any, include: any } = { data: {}, include: {} };
 
         if (solic) {
@@ -276,7 +276,7 @@ export class AuthService {
             const adminsID = admins.map(({ id }) => { return { id } });
 
             await this.prisma.solic.create({
-                data: { ...solic, toAdmins: { connect: adminsID }, from: { connect: user } }
+                data: { roles: solic.roles, toAdmins: { connect: adminsID }, from: { connect: { id: user.id } } }
             });
         };
 
@@ -290,12 +290,24 @@ export class AuthService {
                     if ('menor' in create) create['menor'] = { create: create['menor'] };
 
                     data[lower] = 'inscricoes' in create ? { create: { ...create, inscricoes: {} } } : { create };
-
-                    if ('inscricoes' in create) await this.createInscricoes(create['inscricoes'], user);
                 };
             };
 
             await this.prisma.user.update({ where: { id: user.id }, data, include });
+        })();
+
+        await (async () => {
+            const roleAluno = solic.roles.find(role => role == 'ALUNO');
+
+            if (roleAluno) {
+                const create = eval(roleAluno.toLowerCase());
+
+                if (create) {
+                    const aluno = await this.prisma.aluno.findUnique({ where: { id: user.id } });
+
+                    if ('inscricoes' in create) await this.createInscricoes(create['inscricoes'], aluno);
+                };
+            };
         })();
 
         return await this.prisma.user.findUnique({ where: { id: user.id } });

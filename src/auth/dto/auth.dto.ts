@@ -22,15 +22,15 @@ export class SignupDto {
     @IsString()
     email: string;
 
-    aluno?: Aluno | string;
-    professor?: Professor | string;
-    admin?: Admin | string;
+    aluno?: Aluno;
+    professor?: Professor;
+    admin?: Admin;
 
     inscricoes?: Inscricao[];
 
     roles?: Role[];
 
-    solic?: Solic | string;
+    solic?: Solic;
 }
 
 export class SigninDto {
