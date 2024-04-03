@@ -143,7 +143,7 @@ export class AuthService {
             await this.prisma.modalidade.update({ where: { name }, data: { local: { connect: update.local } } });
         };
 
-        return await this.prisma.modalidade.findUnique({ where: { name } });
+        return await this.prisma.modalidade.findUnique({ where: { id: modalidade.id } });
     }
 
     async deleteModalidade({ name }: ModalidadeDto) {
