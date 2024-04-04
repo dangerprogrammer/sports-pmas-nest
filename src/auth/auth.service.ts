@@ -130,11 +130,13 @@ export class AuthService {
         else throw new ForbiddenException("Modalidade not found");
 
         if (update.horarios) await (async () => {
-            for (let horario of update.horarios) await this.prisma.horario.upsert({
-                where: horario,
-                update: { modalidades: { set: modalidade } },
-                create: { ...horario, modalidades: { connect: modalidade } }
-            });
+            for (let horario of update.horarios) {
+                await this.prisma.horario.upsert({
+                    where: horario,
+                    update: { modalidades: { set: { id: modalidade.id } } },
+                    create: { ...horario, modalidades: { connect: { id: modalidade.id } } }
+                });
+            };
         })();
 
         if (update.local) {
