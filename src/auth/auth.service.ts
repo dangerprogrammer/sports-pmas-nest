@@ -153,9 +153,9 @@ export class AuthService {
         })();
 
         if (update.local) {
-            await this.createLocal(update.local);
+            const local = await this.createLocal(update.local);
 
-            await this.prisma.modalidade.update({ where: { name }, data: { local: { connect: update.local } } });
+            await this.prisma.modalidade.update({ where: { id: modalidade.id }, data: { local: { connect: { id: local.id } } } });
         };
 
         return await this.prisma.modalidade.findUnique({ where: { id: modalidade.id } });
