@@ -130,9 +130,22 @@ export class AuthService {
         else throw new ForbiddenException("Modalidade not found");
 
         if (update.horarios) await (async () => {
+            const modalidadeHorarios = (await this.prisma.horario.findMany({ 
+                where: { modalidades: { some: { id: modalidade.id } } }
+            })).map(({ id }) => { return { id } });
+
+            await this.prisma.modalidade.update({
+                where: { id: modalidade.id },
+                data: {
+                    horarios: {
+                        disconnect: modalidadeHorarios
+                    }
+                }
+            })
+
             for (let horario of update.horarios) {
                 await this.prisma.horario.upsert({
-                    where: horario,
+                    where: { time: horario.time },
                     update: { modalidades: { set: { id: modalidade.id } } },
                     create: { ...horario, modalidades: { connect: { id: modalidade.id } } }
                 });
