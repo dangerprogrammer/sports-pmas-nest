@@ -6,8 +6,8 @@
   "private": true,
   "license": "MIT",
   "scripts": {
-    "docker": "cls & docker-compose up",
-    "prisma": "cls & npx prisma migrate dev & npx prisma db push & npm i --save-dev prisma@latest & npm i @prisma/client@latest & npx prisma studio",
+    "docker": "docker-compose up",
+    "prisma": "npx prisma migrate dev & npx prisma studio",
     "build": "nest build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "nest start",
