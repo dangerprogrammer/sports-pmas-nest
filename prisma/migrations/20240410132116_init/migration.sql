@@ -106,6 +106,8 @@ CREATE TABLE "solics" (
     "id" SERIAL NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
+    "accepted" BOOLEAN NOT NULL DEFAULT false,
+    "done" BOOLEAN NOT NULL DEFAULT false,
     "userId" INTEGER NOT NULL,
     "roles" "Role"[],
 

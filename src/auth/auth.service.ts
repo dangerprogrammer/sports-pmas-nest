@@ -8,7 +8,7 @@ import { Admin, Aluno, Professor, Solic, User } from '@prisma/client';
 import { LocalDto } from './dto/local.dto';
 import { ModalidadeDto } from './dto/modalidade.dto';
 import { AcceptDto } from './dto/accept.dto';
-import { UpdateLocalDto, UpdateModalidadeDto, UpdateUserDto } from './dto/updates.dto';
+import { UpdateLocalDto, UpdateModalidadeDto, UpdateSolicDto, UpdateUserDto } from './dto/updates.dto';
 import { InscricaoDto } from './dto/inscricao.dto';
 import { SolicDto } from './dto/solic.dto';
 
@@ -130,7 +130,7 @@ export class AuthService {
         else throw new ForbiddenException("Modalidade not found");
 
         if (update.horarios) await (async () => {
-            const modalidadeHorarios = (await this.prisma.horario.findMany({ 
+            const modalidadeHorarios = (await this.prisma.horario.findMany({
                 where: { modalidades: { some: { id: modalidade.id } } }
             })).map(({ id }) => { return { id } });
 
@@ -172,20 +172,18 @@ export class AuthService {
     async acceptUser({ cpf, accepted }: AcceptDto) {
         const user = await this.prisma.user.findUnique({ where: { cpf } });
 
-        if (!user) throw new ForbiddenException("Don't has user!");
+        if (!user) throw new ForbiddenException("User not found");
         if (user.accepted) return !0;
+
+        await this.updateSolic({ cpf, update: { done: !0, accepted } });
 
         if (accepted) {
             const { roles } = await this.prisma.solic.findUnique({ where: { userId: user.id } });
 
-            await this.prisma.solic.deleteMany({ where: { userId: user.id } });
-
-            return await this.prisma.user.update({ where: { cpf }, data: { roles, accepted } });
-        } else {
-            await this.prisma.solic.deleteMany({ where: { userId: user.id } });
-
-            return !1;
+            return await this.updateUser({ cpf, update: { roles, accepted } });
         };
+
+        return !1;
     }
 
     async updateUser({ cpf, update }: UpdateUserDto) {
@@ -212,6 +210,16 @@ export class AuthService {
         const solicNotif = { backAPI: !0, submitAction: 'goLogin', text: 'Solicitação criada com sucesso!' };
 
         return user.accepted || hasSolic || solicNotif;
+    }
+
+    async updateSolic({ cpf, update }: UpdateSolicDto) {
+        const user = await this.prisma.user.findUnique({ where: { cpf } });
+        const hasSolic = await this.prisma.solic.findUnique({ where: { userId: user.id } });
+
+        if (hasSolic) await this.prisma.solic.update({ where: { userId: user.id }, data: { ...update } });
+        else throw new ForbiddenException("Solic not found");
+
+        return await this.prisma.solic.findUnique({ where: { userId: user.id } }); 
     }
 
     async logout(userId: number) {

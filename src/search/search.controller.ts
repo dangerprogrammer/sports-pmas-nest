@@ -24,7 +24,7 @@ export class SearchController {
     @Public()
     @Get('admin/:id')
     findAdmin(@Param('id') id: number) {
-        return this.search.findAdmin(id);
+        return this.search.findAdmin(+id);
     }
 
     @Public()
@@ -37,6 +37,11 @@ export class SearchController {
     @Get('horarios/:modName')
     searchHorarios(@Param('modName') modName: $Enums.Aula) {
         return this.search.searchHorarios(modName);
+    }
+
+    @Get('solic/:id')
+    searchSolic(@Param('id') id: number) {
+        return this.search.searchSolic(+id);
     }
 
     @Public()

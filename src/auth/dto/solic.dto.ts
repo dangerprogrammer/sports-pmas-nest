@@ -7,4 +7,7 @@ export class SolicDto {
     @IsNotEmpty()
     @IsString()
     cpf: string;
+
+    accepted: boolean;
+    done: boolean;
 }

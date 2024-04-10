@@ -144,6 +144,8 @@ model Solic {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   toAdmins  Admin[]
+  accepted  Boolean  @default(false)
+  done      Boolean  @default(false)
 
   userId Int  @unique
   from   User @relation(fields: [userId], references: [id])

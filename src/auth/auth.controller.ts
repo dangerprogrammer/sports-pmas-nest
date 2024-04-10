@@ -7,7 +7,7 @@ import { GetCurrentUser, GetCurrentUserId, Public } from 'src/common/decorators'
 import { LocalDto } from './dto/local.dto';
 import { ModalidadeDto } from './dto/modalidade.dto';
 import { AcceptDto } from './dto/accept.dto';
-import { UpdateLocalDto, UpdateModalidadeDto, UpdateUserDto } from './dto/updates.dto';
+import { UpdateLocalDto, UpdateModalidadeDto, UpdateSolicDto, UpdateUserDto } from './dto/updates.dto';
 import { InscricaoDto } from './dto/inscricao.dto';
 import { SolicDto } from './dto/solic.dto';
 
@@ -96,6 +96,13 @@ export class AuthController {
     @HttpCode(HttpStatus.CREATED)
     createSolic(@Body() dto: SolicDto) {
         return this.auth.createSolic(dto);
+    }
+
+    @Public()
+    @Patch('update/solic')
+    @HttpCode(HttpStatus.CREATED)
+    updateSolic(@Body() dto: UpdateSolicDto) {
+        return this.auth.updateSolic(dto);
     }
 
     @Post('logout')

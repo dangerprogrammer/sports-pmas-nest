@@ -24,7 +24,8 @@ export class SearchService {
     async findAdmin(id: number) {
         const solics = await this.prisma.solic.findMany({
             where: {
-                toAdmins: { some: { id: +id } }
+                toAdmins: { some: { id } },
+                done: !1
             }
         });
 
@@ -45,6 +46,12 @@ export class SearchService {
         })).sort(({ id: idA }, { id: idB }) => idA - idB);
 
         return horariosFromMod;
+    }
+
+    async searchSolic(userId: number) {
+        const solic = await this.prisma.solic.findUnique({ where: { userId } });
+
+        return solic;
     }
 
     async findUserByToken(auth: string) {

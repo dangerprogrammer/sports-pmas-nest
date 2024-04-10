@@ -2,6 +2,7 @@ import { IsNotEmpty, IsString } from "class-validator";
 import { LocalDto } from "./local.dto";
 import { Aula, Role } from "@prisma/client";
 import { ModalidadeDto } from "./modalidade.dto";
+import { SolicDto } from "./solic.dto";
 
 export class UpdateLocalDto {
     @IsNotEmpty()
@@ -38,5 +39,16 @@ export class UpdateUserDto {
         roles?: Role[];
 
         solic?: any;
+
+        accepted?: boolean;
     }>;
+}
+
+export class UpdateSolicDto {
+    @IsNotEmpty()
+    @IsString()
+    cpf: string;
+
+    @IsNotEmpty()
+    update: Partial<SolicDto>;
 }
