@@ -36,11 +36,7 @@ export class AuthService {
 
         let newUser = await this.prisma.user.create({ data: { ...data, hash } });
 
-        newUser = await this.updateUserRoles(newUser, aluno, professor, admin, solic);
-
-        const isAluno = await this.prisma.aluno.findUnique({ where: { id: newUser.id } });
-
-        if (isAluno) await this.refreshModalidade(isAluno);
+        newUser = await this.updateUserRoles(newUser, aluno, professor, admin, solic, inscricoes);
 
         const tokens = await this.getTokens(newUser.id, newUser.cpf);
 
@@ -180,6 +176,23 @@ export class AuthService {
         if (accepted) {
             const { roles } = await this.prisma.solic.findUnique({ where: { userId: user.id } });
 
+            await this.updateUser({ cpf, update: { roles, accepted } });
+
+            const admins = await this.prisma.admin.findMany({ where: { accepted: !0 } });
+            const adminsID = admins.map(({ id }) => { return { id } });
+
+            const isAluno = await this.prisma.aluno.findUnique({ where: { id: user.id } });
+
+            if (isAluno) await this.refreshModalidade(isAluno);
+            if (roles.find(role => role == 'ADMIN')) {
+                const solics = await this.prisma.solic.findMany();
+
+                for (const { id } of solics) await this.prisma.solic.update({
+                    where: { id },
+                    data: { toAdmins: { set: adminsID } }
+                });
+            };
+
             return await this.updateUser({ cpf, update: { roles, accepted } });
         };
 
@@ -219,7 +232,7 @@ export class AuthService {
         if (hasSolic) await this.prisma.solic.update({ where: { userId: user.id }, data: { ...update } });
         else throw new ForbiddenException("Solic not found");
 
-        return await this.prisma.solic.findUnique({ where: { userId: user.id } }); 
+        return await this.prisma.solic.findUnique({ where: { userId: user.id } });
     }
 
     async logout(userId: number) {
@@ -259,11 +272,20 @@ export class AuthService {
 
                 if (!prismaHorario) throw new ForbiddenException("Don't exists this horario!");
 
-                createdInscricoes.push(await this.prisma.inscricao.upsert({
+                const { time } = await this.prisma.inscricao.upsert({
                     where: { time: horario },
-                    update: { aluno: { connect: { id } }, horario: { connect: prismaHorario } },
-                    create: { aula, aluno: { connect: { id } }, horario: { connect: prismaHorario } }
-                }));
+                    update: {
+                        aluno: { connect: { id } },
+                        horario: { connect: prismaHorario }
+                    },
+                    create: {
+                        aula,
+                        aluno: { connect: { id } },
+                        horario: { connect: prismaHorario }
+                    }
+                });
+
+                createdInscricoes.push(await this.prisma.inscricao.findUnique({ where: { time } }));
             }
         })();
 
@@ -277,10 +299,10 @@ export class AuthService {
             for (const inscricao of inscricoesDoAluno) {
                 const modalidade = await this.prisma.modalidade.findUnique({ where: { name: inscricao.aula } });
                 const alunosID = (await this.prisma.aluno.findMany({
-                    where: { inscricoes: { some: inscricao } }
+                    where: { inscricoes: { some: inscricao }, accepted: !0 }
                 })).map(({ id }) => { return { id } });
 
-                if (!modalidade) throw new ForbiddenException(`Don't exists modalidade "${inscricao.aula}"`);
+                if (!modalidade) throw new ForbiddenException("Modalidade not found");
                 if (alunosID.length > modalidade.vagas) throw new ForbiddenException(`Ah não! Esta modalidade já está lotada! (Max: ${modalidade.vagas})`);
 
                 await this.prisma.modalidade.update({
@@ -291,7 +313,7 @@ export class AuthService {
         })();
     }
 
-    async updateUserRoles(user: User, aluno: Aluno, professor: Professor, admin: Admin, solic: Solic) {
+    async updateUserRoles(user: User, aluno: Aluno, professor: Professor, admin: Admin, solic: Solic, inscricoes: InscricaoDto[]) {
         const { data, include }: { data: any, include: any } = { data: {}, include: {} };
 
         if (solic) {
@@ -328,7 +350,7 @@ export class AuthService {
                 if (create) {
                     const aluno = await this.prisma.aluno.findUnique({ where: { id: user.id } });
 
-                    if ('inscricoes' in create) await this.createInscricoes(create['inscricoes'], aluno);
+                    await this.createInscricoes(inscricoes, aluno);
                 };
             };
         })();

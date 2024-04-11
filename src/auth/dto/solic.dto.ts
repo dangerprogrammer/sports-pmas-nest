@@ -10,4 +10,6 @@ export class SolicDto {
 
     accepted: boolean;
     done: boolean;
+
+    toAdmins: any;
 }
