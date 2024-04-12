@@ -9,4 +9,7 @@ export class ModalidadeDto {
     horarios?: Horario[];
 
     local?: Localidade;
+
+    available?: number;
+    vagas?: number;
 }

@@ -116,7 +116,7 @@ CREATE TABLE "solics" (
 
 -- CreateTable
 CREATE TABLE "Inscricao" (
-    "alunoId" INTEGER,
+    "alunoId" INTEGER NOT NULL,
     "professorId" INTEGER,
     "aula" "Aula" NOT NULL,
     "time" TIMESTAMP(3) NOT NULL
@@ -214,7 +214,7 @@ CREATE UNIQUE INDEX "admins_id_createdAt_updatedAt_nome_comp_email_tel_accepted_
 CREATE UNIQUE INDEX "solics_userId_key" ON "solics"("userId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Inscricao_time_key" ON "Inscricao"("time");
+CREATE UNIQUE INDEX "Inscricao_alunoId_key" ON "Inscricao"("alunoId");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "modalidades_name_key" ON "modalidades"("name");
@@ -271,7 +271,7 @@ ALTER TABLE "admins" ADD CONSTRAINT "admins_id_createdAt_updatedAt_nome_comp_ema
 ALTER TABLE "solics" ADD CONSTRAINT "solics_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Inscricao" ADD CONSTRAINT "Inscricao_alunoId_fkey" FOREIGN KEY ("alunoId") REFERENCES "alunos"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE "Inscricao" ADD CONSTRAINT "Inscricao_alunoId_fkey" FOREIGN KEY ("alunoId") REFERENCES "alunos"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Inscricao" ADD CONSTRAINT "Inscricao_professorId_fkey" FOREIGN KEY ("professorId") REFERENCES "professors"("id") ON DELETE SET NULL ON UPDATE CASCADE;

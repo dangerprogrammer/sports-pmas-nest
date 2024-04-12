@@ -99,13 +99,13 @@ export class AuthService {
         return 'Local deleted successfully';
     }
 
-    async createModalidade({ name, local, horarios }: ModalidadeDto) {
+    async createModalidade({ name, local, horarios, vagas }: ModalidadeDto) {
         const hasLocal = await this.createLocal(local);
 
         const modalidade = await this.prisma.modalidade.upsert({
             where: { name },
-            update: { local: { connect: hasLocal } },
-            create: { name, local: { connect: hasLocal } }
+            update: { local: { connect: hasLocal }, vagas: +vagas },
+            create: { name, local: { connect: hasLocal }, vagas: +vagas, available: +vagas }
         });
 
         await (async () => {
@@ -122,7 +122,14 @@ export class AuthService {
     async updateModalidade({ name, update }: UpdateModalidadeDto) {
         const modalidade = await this.prisma.modalidade.findUnique({ where: { name } });
 
-        if (modalidade) await this.prisma.modalidade.update({ where: { name }, data: { ...update, local: {}, horarios: {} } });
+        if (modalidade) await this.prisma.modalidade.update({
+            where: { name }, data: {
+                ...update,
+                vagas: +update.vagas || undefined,
+                available: +update.available || undefined,
+                local: {}, horarios: {}
+            }
+        });
         else throw new ForbiddenException("Modalidade not found");
 
         if (update.horarios) await (async () => {
@@ -193,7 +200,7 @@ export class AuthService {
                 });
             };
 
-            return await this.updateUser({ cpf, update: { roles, accepted } });
+            return await this.prisma.user.findUnique({ where: { cpf } });
         };
 
         return !1;
@@ -272,34 +279,27 @@ export class AuthService {
 
                 if (!prismaHorario) throw new ForbiddenException("Don't exists this horario!");
 
-                const { time } = await this.prisma.inscricao.upsert({
-                    where: { time: horario },
-                    update: {
-                        aluno: { connect: { id } },
-                        horario: { connect: prismaHorario }
-                    },
-                    create: {
-                        aula,
-                        aluno: { connect: { id } },
-                        horario: { connect: prismaHorario }
-                    }
+                const { alunoId } = await this.prisma.inscricao.upsert({
+                    where: { alunoId: id },
+                    update: { aula, horario: { connect: prismaHorario } },
+                    create: { aula, aluno: { connect: { id } }, horario: { connect: prismaHorario } }
                 });
 
-                createdInscricoes.push(await this.prisma.inscricao.findUnique({ where: { time } }));
+                createdInscricoes.push(await this.prisma.inscricao.findUnique({ where: { alunoId } }));
             }
         })();
 
         return createdInscricoes;
     }
 
-    async refreshModalidade(aluno: any) {
-        const inscricoesDoAluno = await this.prisma.inscricao.findMany({ where: { alunoId: aluno.id } });
+    async refreshModalidade({ id: alunoId }: Aluno) {
+        const inscricoesDoAluno = await this.prisma.inscricao.findMany({ where: { alunoId } });
 
         await (async () => {
             for (const inscricao of inscricoesDoAluno) {
                 const modalidade = await this.prisma.modalidade.findUnique({ where: { name: inscricao.aula } });
                 const alunosID = (await this.prisma.aluno.findMany({
-                    where: { inscricoes: { some: inscricao }, accepted: !0 }
+                    where: { inscricoes: { some: { aula: inscricao.aula } }, accepted: !0 }
                 })).map(({ id }) => { return { id } });
 
                 if (!modalidade) throw new ForbiddenException("Modalidade not found");

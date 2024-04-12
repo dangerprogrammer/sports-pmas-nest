@@ -21,15 +21,16 @@ export class SearchService {
         return user;
     }
 
-    async findAdmin(id: number) {
-        const solics = await this.prisma.solic.findMany({
-            where: {
-                toAdmins: { some: { id } },
-                done: !1
-            }
+    async findAdmin(id: number, { min, max }: { min: number, max: number }) {
+        const size = await this.prisma.solic.count({
+            where: { toAdmins: { some: { id } }, done: !1 }
         });
+        const solics = (await this.prisma.solic.findMany({
+            where: { toAdmins: { some: { id } }, done: !1 },
+            take: max - min, skip: size - Math.min(max, size)
+        }));
 
-        return solics;
+        return { solics, size };
     }
 
     async searchModalidades() {

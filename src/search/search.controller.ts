@@ -1,4 +1,4 @@
-import { Controller, Get, Headers, Param, Req } from '@nestjs/common';
+import { Body, Controller, Get, Headers, Param, Post, Req } from '@nestjs/common';
 import { SearchService } from './search.service';
 import { Public } from 'src/common/decorators';
 import { $Enums } from '@prisma/client';
@@ -22,9 +22,9 @@ export class SearchController {
     }
 
     @Public()
-    @Get('admin/:id')
-    findAdmin(@Param('id') id: number) {
-        return this.search.findAdmin(+id);
+    @Post('admin/:id')
+    findAdmin(@Body() limits: { min: number, max: number }, @Param('id') id: number) {
+        return this.search.findAdmin(+id, limits);
     }
 
     @Public()
