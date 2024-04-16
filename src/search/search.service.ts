@@ -27,7 +27,7 @@ export class SearchService {
         });
         const solics = (await this.prisma.solic.findMany({
             where: { toAdmins: { some: { id } }, done: !1 },
-            take: max - min, skip: size - Math.min(max, size)
+            take: Math.min(max, size) - min, skip: size - Math.min(max, size)
         }));
 
         return { solics, size };
