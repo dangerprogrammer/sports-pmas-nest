@@ -156,8 +156,10 @@ model Solic {
 }
 
 model Inscricao {
-  alunoId Int   @unique
-  aluno   Aluno @relation("inscricoes_aluno", fields: [alunoId], references: [id])
+  id Int @id @default(autoincrement())
+
+  alunoId Int?
+  aluno   Aluno? @relation("inscricoes_aluno", fields: [alunoId], references: [id])
 
   professorId Int?
   professor   Professor? @relation("inscricoes_professor", fields: [professorId], references: [id])

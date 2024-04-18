@@ -1,13 +1,13 @@
 import { Body, Controller, Get, Headers, Param, Post, Req } from '@nestjs/common';
 import { SearchService } from './search.service';
 import { Public } from 'src/common/decorators';
-import { $Enums } from '@prisma/client';
+import { $Enums, Inscricao } from '@prisma/client';
 
 @Controller('search')
 export class SearchController {
-    constructor (
+    constructor(
         private search: SearchService
-    ) {}
+    ) { }
 
     @Public()
     @Get('user/:cpf')
@@ -22,9 +22,15 @@ export class SearchController {
     }
 
     @Public()
-    @Post('admin/:id')
-    findAdmin(@Body() limits: { min: number, max: number }, @Param('id') id: number) {
-        return this.search.findAdmin(+id, limits);
+    @Post('solic/:id')
+    findSolic(@Body() dto: { limits: { min: number, max: number }, done: boolean }, @Param('id') id: number) {
+        return this.search.findSolic(+id, dto);
+    }
+
+    @Public()
+    @Get('inscricao/:id')
+    findInscricoes(@Param('id') id: number) {
+        return this.search.findInscricoes(+id);
     }
 
     @Public()
@@ -37,6 +43,12 @@ export class SearchController {
     @Get('horarios/:modName')
     searchHorarios(@Param('modName') modName: $Enums.Aula) {
         return this.search.searchHorarios(modName);
+    }
+
+    @Public()
+    @Post('horarios-subscribe/:modName')
+    searchHorariosSubscribe(@Body() inscricoes: Inscricao[], @Param('modName') modName: $Enums.Aula) {
+        return this.search.searchHorariosSubscribe(modName, inscricoes);
     }
 
     @Get('solic/:id')

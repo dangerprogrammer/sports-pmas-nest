@@ -63,9 +63,10 @@ export class AuthService {
 
     async subscribeUser(inscricoes: InscricaoDto[], req: any) {
         const { user } = req;
-        const prismaUser = await this.prisma.aluno.findUnique({ where: { id: user.sub } });
+        const aluno = await this.prisma.aluno.findUnique({ where: { id: user.sub } });
+        const professor = await this.prisma.professor.findUnique({ where: { id: user.sub } });
 
-        return this.createInscricoes(inscricoes, prismaUser);
+        return this.createInscricoes(inscricoes, aluno, professor);
     }
 
     async createLocal(local: LocalDto) {
@@ -190,7 +191,7 @@ export class AuthService {
 
             const isAluno = await this.prisma.aluno.findUnique({ where: { id: user.id } });
 
-            if (isAluno) await this.refreshModalidade(isAluno);
+            if (isAluno) await this.refreshModalidade(user.id);
             if (roles.find(role => role == 'ADMIN')) {
                 const solics = await this.prisma.solic.findMany();
 
@@ -270,7 +271,7 @@ export class AuthService {
         return tokens;
     }
 
-    async createInscricoes(inscricoes: InscricaoDto[], { id }: Aluno) {
+    async createInscricoes(inscricoes: InscricaoDto[], aluno?: Aluno, professor?: Professor) {
         const createdInscricoes = [];
 
         await (async () => {
@@ -279,35 +280,41 @@ export class AuthService {
 
                 if (!prismaHorario) throw new ForbiddenException("Don't exists this horario!");
 
-                const { alunoId } = await this.prisma.inscricao.upsert({
-                    where: { alunoId: id },
-                    update: { aula, horario: { connect: prismaHorario } },
-                    create: { aula, aluno: { connect: { id } }, horario: { connect: prismaHorario } }
+                const { id } = await this.prisma.inscricao.create({
+                    data: {
+                        aula,
+                        ...(aluno && { aluno: { connect: { id: aluno.id } } }),
+                        ...(professor && { professor: { connect: { id: professor.id } } }),
+                        horario: { connect: prismaHorario }
+                    }
                 });
 
-                createdInscricoes.push(await this.prisma.inscricao.findUnique({ where: { alunoId } }));
+                createdInscricoes.push(await this.prisma.inscricao.findUnique({ where: { id } }));
             }
         })();
 
         return createdInscricoes;
     }
 
-    async refreshModalidade({ id: alunoId }: Aluno) {
-        const inscricoesDoAluno = await this.prisma.inscricao.findMany({ where: { alunoId } });
+    async refreshModalidade(id: number) {
+        const inscricoes = await this.prisma.inscricao.findMany({ where: { OR: [{ alunoId: id }, { professorId: id }] } });
 
         await (async () => {
-            for (const inscricao of inscricoesDoAluno) {
-                const modalidade = await this.prisma.modalidade.findUnique({ where: { name: inscricao.aula } });
+            for (const { aula } of inscricoes) {
+                const modalidade = await this.prisma.modalidade.findUnique({ where: { name: aula } });
                 const alunosID = (await this.prisma.aluno.findMany({
-                    where: { inscricoes: { some: { aula: inscricao.aula } }, accepted: !0 }
+                    where: { inscricoes: { some: { aula } }, accepted: !0 }
+                })).map(({ id }) => { return { id } });
+                const professorsID = (await this.prisma.professor.findMany({
+                    where: { inscricoes: { some: { aula } }, accepted: !0 }
                 })).map(({ id }) => { return { id } });
 
                 if (!modalidade) throw new ForbiddenException("Modalidade not found");
                 if (alunosID.length > modalidade.vagas) throw new ForbiddenException(`Ah não! Esta modalidade já está lotada! (Max: ${modalidade.vagas})`);
 
                 await this.prisma.modalidade.update({
-                    where: { name: inscricao.aula },
-                    data: { available: modalidade.vagas - alunosID.length, alunos: { set: alunosID } }
+                    where: { name: aula },
+                    data: { available: modalidade.vagas - alunosID.length, alunos: { set: alunosID }, professores: { set: professorsID } }
                 });
             };
         })();
@@ -343,14 +350,16 @@ export class AuthService {
 
         await (async () => {
             const roleAluno = solic.roles.find(role => role == 'ALUNO');
+            const roleProfessor = solic.roles.find(role => role == 'PROFESSOR');
 
-            if (roleAluno) {
+            if (roleAluno || roleProfessor) {
                 const create = eval(roleAluno.toLowerCase());
 
                 if (create) {
                     const aluno = await this.prisma.aluno.findUnique({ where: { id: user.id } });
+                    const professor = await this.prisma.professor.findUnique({ where: { id: user.id } });
 
-                    await this.createInscricoes(inscricoes, aluno);
+                    await this.createInscricoes(inscricoes, aluno, professor);
                 };
             };
         })();
