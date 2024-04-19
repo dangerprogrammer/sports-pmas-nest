@@ -22,6 +22,12 @@ export class SearchController {
     }
 
     @Public()
+    @Get('aluno/id/:id')
+    findAlunoById(@Param('id') id: number) {
+        return this.search.findAlunoById(id);
+    }
+
+    @Public()
     @Post('solic/:id')
     findSolic(@Body() dto: { limits: { min: number, max: number }, done: boolean }, @Param('id') id: number) {
         return this.search.findSolic(+id, dto);
@@ -43,6 +49,12 @@ export class SearchController {
     @Get('horarios/:modName')
     searchHorarios(@Param('modName') modName: $Enums.Aula) {
         return this.search.searchHorarios(modName);
+    }
+
+    @Public()
+    @Get('users/:time')
+    findUsersHorario(@Param('time') time: Date) {
+        return this.search.findUsersHorario(time);
     }
 
     @Public()

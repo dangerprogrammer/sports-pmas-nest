@@ -300,7 +300,7 @@ export class AuthService {
         const inscricoes = await this.prisma.inscricao.findMany({ where: { OR: [{ alunoId: id }, { professorId: id }] } });
 
         await (async () => {
-            for (const { aula } of inscricoes) {
+            for (const { aula, time } of inscricoes) {
                 const modalidade = await this.prisma.modalidade.findUnique({ where: { name: aula } });
                 const alunosID = (await this.prisma.aluno.findMany({
                     where: { inscricoes: { some: { aula } }, accepted: !0 }
@@ -349,11 +349,10 @@ export class AuthService {
         })();
 
         await (async () => {
-            const roleAluno = solic.roles.find(role => role == 'ALUNO');
-            const roleProfessor = solic.roles.find(role => role == 'PROFESSOR');
+            const role = solic.roles.find(role => role == 'ALUNO' || role == 'PROFESSOR');
 
-            if (roleAluno || roleProfessor) {
-                const create = eval(roleAluno.toLowerCase());
+            if (role) {
+                const create = eval(role.toLowerCase());
 
                 if (create) {
                     const aluno = await this.prisma.aluno.findUnique({ where: { id: user.id } });

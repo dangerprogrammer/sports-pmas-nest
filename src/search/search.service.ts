@@ -21,6 +21,12 @@ export class SearchService {
         return user;
     }
 
+    async findAlunoById(id: number) {
+        const user = await this.prisma.aluno.findUnique({ where: { id: +id } });
+
+        return user;
+    }
+
     async findSolic(id: number, { limits: { min, max }, done }: { limits: { min: number, max: number }, done: boolean }) {
         const size = await this.prisma.solic.count({
             where: { toAdmins: { some: { id } }, done }
@@ -64,6 +70,12 @@ export class SearchService {
         return horariosFromMod;
     }
 
+    async findUsersHorario(time: Date) {
+        const inscricoes = await this.prisma.inscricao.findMany({ where: { time, alunoId: { not: null } } });
+
+        return inscricoes;
+    }
+
     async searchHorariosSubscribe(name: $Enums.Aula, inscricoes: Inscricao[]) {
         const horarios = await this.searchHorarios(name);
 
@@ -83,10 +95,8 @@ export class SearchService {
 
     async findUserByToken(auth: string) {
         const token = auth.split(' ')[1];
-        const decodedToken = jwt.verify(token, 'at-secret') as any;
+        const { sub: id } = jwt.verify(token, 'at-secret') as any;
 
-        const user = await this.prisma.user.findUnique({ where: { id: decodedToken.sub } });
-
-        return user;
+        return await this.prisma.user.findUnique({ where: { id } });
     }
 }
