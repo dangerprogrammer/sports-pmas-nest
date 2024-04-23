@@ -65,7 +65,7 @@ export class SearchService {
             where: {
                 modalidades: { some: { name } }
             }
-        })).sort(({ id: idA }, { id: idB }) => idA - idB);
+        })).sort(({ time: timeA }, { time: timeB }) => (new Date(timeA) as unknown as number) - (new Date(timeB) as unknown as number));
 
         return horariosFromMod;
     }

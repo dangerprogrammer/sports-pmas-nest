@@ -2,7 +2,6 @@ import { ForbiddenException, Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { SigninDto, SignupDto } from './dto/auth.dto';
 import * as bcrypt from 'bcrypt';
-import { Tokens } from './types';
 import { JwtService } from '@nestjs/jwt';
 import { Admin, Aluno, Professor, Solic, User } from '@prisma/client';
 import { LocalDto } from './dto/local.dto';
@@ -31,7 +30,7 @@ export class AuthService {
         private jwtService: JwtService
     ) { }
 
-    async signupLocal({ password, aluno, professor, admin, solic, inscricoes, ...data }: SignupDto): Promise<Tokens> {
+    async signupLocal({ password, aluno, professor, admin, solic, inscricoes, ...data }: SignupDto) {
         const hash = await this.hashData(password);
 
         let newUser = await this.prisma.user.create({ data: { ...data, hash } });
@@ -45,7 +44,7 @@ export class AuthService {
         return tokens;
     }
 
-    async signinLocal({ password, cpf }: SigninDto): Promise<Tokens> {
+    async signinLocal({ password, cpf }: SigninDto) {
         const user = await this.prisma.user.findUnique({ where: { cpf } });
 
         if (!user) throw new ForbiddenException("Access Denied");
@@ -59,6 +58,14 @@ export class AuthService {
         await this.updateRtHash(user.id, tokens.refresh_token);
 
         return tokens;
+    }
+
+    async comparePassword({ password, cpf }: SigninDto) {
+        const user = await this.prisma.user.findUnique({ where: { cpf } });
+
+        if (!user) throw new ForbiddenException("Access Denied");
+
+        return await bcrypt.compare(password, user.hash);
     }
 
     async subscribeUser(inscricoes: InscricaoDto[], req: any) {
