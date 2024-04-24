@@ -3,6 +3,7 @@ import { LocalDto } from "./local.dto";
 import { Aula, Role } from "@prisma/client";
 import { ModalidadeDto } from "./modalidade.dto";
 import { SolicDto } from "./solic.dto";
+import { InscricaoDto } from "./inscricao.dto";
 
 export class UpdateLocalDto {
     @IsNotEmpty()
@@ -28,13 +29,15 @@ export class UpdateUserDto {
 
     @IsNotEmpty()
     update: Partial<{
-        cpf: string;
         password: string;
-        nome_comp: string;
+        tel: string;
+        email: string;
 
         aluno?: any;
         professor?: any;
         admin?: any;
+
+        inscricoes?: InscricaoDto[];
 
         roles?: Role[];
 

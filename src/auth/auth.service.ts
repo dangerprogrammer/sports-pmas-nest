@@ -217,7 +217,38 @@ export class AuthService {
     async updateUser({ cpf, update }: UpdateUserDto) {
         const user = await this.prisma.user.findUnique({ where: { cpf } });
 
-        if (user) await this.prisma.user.update({ where: { cpf }, data: update });
+        let hash: string;
+        if (update.password) {
+            hash = await this.hashData(update.password);
+
+            delete update.password;
+        };
+
+        if (update.aluno) update.aluno = { update: update.aluno };
+
+        if (update.inscricoes) {
+            const aluno = await this.prisma.aluno.findUnique({ where: { id: user.id } });
+            const professor = await this.prisma.professor.findUnique({ where: { id: user.id } });
+
+            if (user) {
+                const inscricoesAluno = await this.prisma.inscricao.findMany({ where: { alunoId: user.id } });
+
+                await (async () => {
+                    for (const { id, alunoId } of inscricoesAluno) await this.prisma.inscricao.update({
+                        where: { id, alunoId },
+                        data: {
+                            aluno: { disconnect: !0 }
+                        }
+                    });
+                })();
+                
+                await this.createInscricoes(update.inscricoes, aluno, professor);
+            };
+
+            delete update.inscricoes;
+        };
+
+        if (user) await this.prisma.user.update({ where: { cpf }, data: { ...update, ...(hash && { hash }) } });
         else throw new ForbiddenException("User not found");
 
         return await this.prisma.user.findUnique({ where: { cpf } });

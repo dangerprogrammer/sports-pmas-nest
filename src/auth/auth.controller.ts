@@ -1,7 +1,6 @@
 import { Body, Controller, Delete, HttpCode, HttpStatus, Patch, Post, Req, UseGuards } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { SigninDto, SignupDto } from './dto/auth.dto';
-import { Tokens } from './types';
 import { RoleGuard, RtGuard, AlunoGuard } from 'src/common/guards';
 import { GetCurrentUser, GetCurrentUserId, Public } from 'src/common/decorators';
 import { LocalDto } from './dto/local.dto';
@@ -18,14 +17,14 @@ export class AuthController {
     @Public()
     @Post('local/signup')
     @HttpCode(HttpStatus.CREATED)
-    signupLocal(@Body() dto: SignupDto): Promise<Tokens> {
+    signupLocal(@Body() dto: SignupDto) {
         return this.auth.signupLocal(dto);
     }
 
     @Public()
     @Post('local/signin')
     @HttpCode(HttpStatus.OK)
-    signinLocal(@Body() dto: SigninDto): Promise<Tokens> {
+    signinLocal(@Body() dto: SigninDto) {
         return this.auth.signinLocal(dto);
     }
 
