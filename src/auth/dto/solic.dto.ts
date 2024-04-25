@@ -11,5 +11,7 @@ export class SolicDto {
     accepted: boolean;
     done: boolean;
 
+    doneBy?: any;
+
     toAdmins: any;
 }

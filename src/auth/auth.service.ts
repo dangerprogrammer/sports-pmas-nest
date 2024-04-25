@@ -2,6 +2,7 @@ import { ForbiddenException, Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { SigninDto, SignupDto } from './dto/auth.dto';
 import * as bcrypt from 'bcrypt';
+import * as jwt from 'jsonwebtoken';
 import { JwtService } from '@nestjs/jwt';
 import { Admin, Aluno, Professor, Solic, User } from '@prisma/client';
 import { LocalDto } from './dto/local.dto';
@@ -133,8 +134,8 @@ export class AuthService {
         if (modalidade) await this.prisma.modalidade.update({
             where: { name }, data: {
                 ...update,
-                vagas: +update.vagas || undefined,
-                available: +update.available || undefined,
+                ...(update.vagas && { vagas: +update.vagas }),
+                ...(update.available && { available: +update.available }),
                 local: {}, horarios: {}
             }
         });
@@ -169,6 +170,11 @@ export class AuthService {
             await this.prisma.modalidade.update({ where: { id: modalidade.id }, data: { local: { connect: { id: local.id } } } });
         };
 
+        if (update.vagas && !update.available) await this.prisma.modalidade.update({
+            where: { id: modalidade.id },
+            data: { available: modalidade.available + (update.vagas - modalidade.vagas) }
+        });
+
         return await this.prisma.modalidade.findUnique({ where: { id: modalidade.id } });
     }
 
@@ -180,14 +186,18 @@ export class AuthService {
         return 'Modalidade deleted successfully';
     }
 
-    async acceptUser({ cpf, accepted }: AcceptDto) {
+    async acceptUser(auth: string, { cpf, accepted }: AcceptDto) {
+        const token = auth.split(' ')[1];
+        const { sub } = jwt.verify(token, 'at-secret') as any;
         const user = await this.prisma.user.findUnique({ where: { cpf } });
 
         if (!user) throw new ForbiddenException("User not found");
         if (user.accepted) return !0;
 
         await this.updateSolic({ cpf, update: { done: !0, accepted } });
+        await this.prisma.solic.update({ where: { userId: user.id }, data: { doneBy: { connect: { id: sub } } } });
 
+        console.log(await this.prisma.solic.findUnique({ where: { userId: user.id } }))
         if (accepted) {
             const { roles } = await this.prisma.solic.findUnique({ where: { userId: user.id } });
 
@@ -241,7 +251,7 @@ export class AuthService {
                         }
                     });
                 })();
-                
+
                 await this.createInscricoes(update.inscricoes, aluno, professor);
             };
 
@@ -275,7 +285,7 @@ export class AuthService {
         const user = await this.prisma.user.findUnique({ where: { cpf } });
         const hasSolic = await this.prisma.solic.findUnique({ where: { userId: user.id } });
 
-        if (hasSolic) await this.prisma.solic.update({ where: { userId: user.id }, data: { ...update } });
+        if (hasSolic) await this.prisma.solic.update({ where: { userId: user.id }, data: update });
         else throw new ForbiddenException("Solic not found");
 
         return await this.prisma.solic.findUnique({ where: { userId: user.id } });

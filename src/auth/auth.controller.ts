@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, HttpCode, HttpStatus, Patch, Post, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Headers, HttpCode, HttpStatus, Patch, Post, Req, UseGuards } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { SigninDto, SignupDto } from './dto/auth.dto';
 import { RoleGuard, RtGuard, AlunoGuard } from 'src/common/guards';
@@ -80,8 +80,8 @@ export class AuthController {
     @UseGuards(RoleGuard)
     @Post('user')
     @HttpCode(HttpStatus.ACCEPTED)
-    acceptUser(@Body() dto: AcceptDto) {
-        return this.auth.acceptUser(dto);
+    acceptUser(@Headers('authorization') auth: string, @Body() dto: AcceptDto) {
+        return this.auth.acceptUser(auth, dto);
     }
 
     @Patch('update/user')

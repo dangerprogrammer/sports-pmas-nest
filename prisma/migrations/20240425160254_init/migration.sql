@@ -108,6 +108,7 @@ CREATE TABLE "solics" (
     "updatedAt" TIMESTAMP(3) NOT NULL,
     "accepted" BOOLEAN NOT NULL DEFAULT false,
     "done" BOOLEAN NOT NULL DEFAULT false,
+    "adminId" INTEGER,
     "userId" INTEGER NOT NULL,
     "roles" "Role"[],
 
@@ -157,6 +158,16 @@ CREATE TABLE "localidades" (
     "bairro" TEXT NOT NULL,
 
     CONSTRAINT "localidades_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "Notification" (
+    "id" SERIAL NOT NULL,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+    "message" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "Notification_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -266,6 +277,9 @@ ALTER TABLE "professors" ADD CONSTRAINT "professors_id_createdAt_updatedAt_nome_
 
 -- AddForeignKey
 ALTER TABLE "admins" ADD CONSTRAINT "admins_id_createdAt_updatedAt_nome_comp_email_tel_accepted_fkey" FOREIGN KEY ("id", "createdAt", "updatedAt", "nome_comp", "email", "tel", "accepted") REFERENCES "users"("id", "createdAt", "updatedAt", "nome_comp", "email", "tel", "accepted") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "solics" ADD CONSTRAINT "solics_adminId_fkey" FOREIGN KEY ("adminId") REFERENCES "admins"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "solics" ADD CONSTRAINT "solics_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;

@@ -71,7 +71,7 @@ export class SearchService {
     }
 
     async findUsersHorario(time: Date) {
-        const inscricoes = await this.prisma.inscricao.findMany({ where: { time, alunoId: { not: null } } });
+        const inscricoes = await this.prisma.inscricao.findMany({ where: { time } });
 
         return inscricoes;
     }

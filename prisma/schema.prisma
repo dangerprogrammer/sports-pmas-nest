@@ -133,7 +133,8 @@ model Admin {
 
   accepted Boolean @default(false)
 
-  solics Solic[]
+  solics     Solic[]
+  doneSolics Solic[] @relation("owner")
 
   @@unique([id, createdAt, updatedAt, nome_comp, email, tel, accepted])
   @@map("admins")
@@ -146,6 +147,9 @@ model Solic {
   toAdmins  Admin[]
   accepted  Boolean  @default(false)
   done      Boolean  @default(false)
+
+  adminId Int?
+  doneBy  Admin? @relation("owner", fields: [adminId], references: [id])
 
   userId Int  @unique
   from   User @relation(fields: [userId], references: [id])
@@ -212,6 +216,14 @@ model Localidade {
 
   @@unique([endereco, bairro])
   @@map("localidades")
+}
+
+model Notification {
+  id        Int      @id @default(autoincrement())
+  updatedAt DateTime @updatedAt
+
+  message   String
+  createdAt DateTime @default(now())
 }
 
 enum Periodo {
