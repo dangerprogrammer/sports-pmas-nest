@@ -195,9 +195,8 @@ export class AuthService {
         if (user.accepted) return !0;
 
         await this.updateSolic({ cpf, update: { done: !0, accepted } });
-        await this.prisma.solic.update({ where: { userId: user.id }, data: { doneBy: { connect: { id: sub } } } });
+        await this.prisma.solic.update({ where: { userId: user.id }, data: { doneAt: new Date(), doneBy: { connect: { id: sub } } } });
 
-        console.log(await this.prisma.solic.findUnique({ where: { userId: user.id } }))
         if (accepted) {
             const { roles } = await this.prisma.solic.findUnique({ where: { userId: user.id } });
 
