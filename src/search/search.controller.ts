@@ -1,7 +1,7 @@
 import { Body, Controller, Get, Headers, Param, Post, Req } from '@nestjs/common';
 import { SearchService } from './search.service';
 import { Public } from 'src/common/decorators';
-import { $Enums, Inscricao } from '@prisma/client';
+import { $Enums, Inscricao, Role } from '@prisma/client';
 
 @Controller('search')
 export class SearchController {
@@ -31,6 +31,12 @@ export class SearchController {
     @Post('solic/:id')
     findSolic(@Body() dto: { limits: { min: number, max: number }, done: boolean }, @Param('id') id: number) {
         return this.search.findSolic(+id, dto);
+    }
+
+    @Public()
+    @Post('users')
+    findUsersRole(@Body() dto: { role: Role, limits: { min: number, max: number } }) {
+        return this.search.findUsersRole(dto);
     }
 
     @Public()

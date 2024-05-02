@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import * as jwt from 'jsonwebtoken';
-import { $Enums, Inscricao } from '@prisma/client';
+import { $Enums, Inscricao, Role } from '@prisma/client';
 
 @Injectable()
 export class SearchService {
@@ -37,6 +37,17 @@ export class SearchService {
         });
 
         return { solics, size };
+    }
+
+    async findUsersRole({ role, limits: { min, max } }: { role: Role, limits: { min: number, max: number } }) {
+        const size = await this.prisma.user.count({ where: { roles: { hasSome: [role] }, accepted: !0 } });
+
+        const users = await this.prisma.user.findMany({
+            where: { roles: { hasSome: [role] }, accepted: !0 },
+            take: Math.min(max, size) - min, skip: size - Math.min(max, size)
+        });
+
+        return { size, users };
     }
 
     async findInscricoes(id: number) {
