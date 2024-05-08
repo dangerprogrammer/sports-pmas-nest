@@ -240,13 +240,16 @@ export class AuthService {
             const professor = await this.prisma.professor.findUnique({ where: { id: user.id } });
 
             if (user) {
-                const inscricoesAluno = await this.prisma.inscricao.findMany({ where: { alunoId: user.id } });
+                const inscricoes = await this.prisma.inscricao.findMany({
+                    where: { OR: [ { alunoId: user.id }, { professorId: user.id } ] }
+                });
 
                 await (async () => {
-                    for (const { id, alunoId } of inscricoesAluno) await this.prisma.inscricao.update({
-                        where: { id, alunoId },
+                    for (const { id } of inscricoes) await this.prisma.inscricao.update({
+                        where: { id },
                         data: {
-                            aluno: { disconnect: !0 }
+                            aluno: { disconnect: !0 },
+                            professor: { disconnect: !0 }
                         }
                     });
                 })();
