@@ -1,4 +1,7 @@
 -- CreateEnum
+CREATE TYPE "Days" AS ENUM ('SEGUNDA', 'TERCA', 'QUARTA', 'QUINTA', 'SEXTA');
+
+-- CreateEnum
 CREATE TYPE "Status" AS ENUM ('ATIVO', 'INATIVO');
 
 -- CreateEnum
@@ -129,7 +132,7 @@ CREATE TABLE "Inscricao" (
     "alunoId" INTEGER,
     "professorId" INTEGER,
     "aula" "Aula" NOT NULL,
-    "time" TIMESTAMP(3) NOT NULL,
+    "horarioId" INTEGER NOT NULL,
 
     CONSTRAINT "Inscricao_pkey" PRIMARY KEY ("id")
 );
@@ -151,6 +154,7 @@ CREATE TABLE "modalidades" (
 -- CreateTable
 CREATE TABLE "horarios" (
     "id" SERIAL NOT NULL,
+    "day" "Days" NOT NULL,
     "time" TIMESTAMP(3) NOT NULL,
     "periodo" "Periodo" NOT NULL,
 
@@ -239,9 +243,6 @@ CREATE UNIQUE INDEX "solics_userId_key" ON "solics"("userId");
 CREATE UNIQUE INDEX "modalidades_name_key" ON "modalidades"("name");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "horarios_time_key" ON "horarios"("time");
-
--- CreateIndex
 CREATE UNIQUE INDEX "localidades_endereco_key" ON "localidades"("endereco");
 
 -- CreateIndex
@@ -299,7 +300,7 @@ ALTER TABLE "Inscricao" ADD CONSTRAINT "Inscricao_alunoId_fkey" FOREIGN KEY ("al
 ALTER TABLE "Inscricao" ADD CONSTRAINT "Inscricao_professorId_fkey" FOREIGN KEY ("professorId") REFERENCES "professors"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Inscricao" ADD CONSTRAINT "Inscricao_time_fkey" FOREIGN KEY ("time") REFERENCES "horarios"("time") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "Inscricao" ADD CONSTRAINT "Inscricao_horarioId_fkey" FOREIGN KEY ("horarioId") REFERENCES "horarios"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "modalidades" ADD CONSTRAINT "modalidades_endereco_bairro_fkey" FOREIGN KEY ("endereco", "bairro") REFERENCES "localidades"("endereco", "bairro") ON DELETE RESTRICT ON UPDATE CASCADE;

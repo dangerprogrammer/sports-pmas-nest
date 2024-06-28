@@ -82,7 +82,10 @@ export class SearchService {
     }
 
     async findUsersHorario(time: Date) {
-        const inscricoes = await this.prisma.inscricao.findMany({ where: { time } });
+        const horarios = await this.prisma.horario.findMany({ where: { time } });
+        const inscricoes = await this.prisma.inscricao.findMany({ where: { OR: horarios.map(({ id }) => {
+            return { horarioId: id }
+        }) } });
 
         return inscricoes;
     }
@@ -90,7 +93,9 @@ export class SearchService {
     async searchHorariosSubscribe(name: $Enums.Aula, inscricoes: Inscricao[]) {
         const horarios = await this.searchHorarios(name);
 
-        return horarios.filter(({ time }) => inscricoes.find(({ time: iTime }) => {
+        return horarios.filter(({ time }) => inscricoes.find(async ({ horarioId }) => {
+            const { time: iTime } = await this.prisma.horario.findUnique({ where: { id: horarioId } });
+
             const iTimeNew = new Date(iTime).toLocaleTimeString();
             const timeNew = new Date(time).toLocaleTimeString();
 

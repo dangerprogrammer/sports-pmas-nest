@@ -157,7 +157,7 @@ export class AuthService {
 
             for (let horario of update.horarios) {
                 await this.prisma.horario.upsert({
-                    where: { time: horario.time },
+                    where: { id: horario.id },
                     update: { modalidades: { set: { id: modalidade.id } } },
                     create: { ...horario, modalidades: { connect: { id: modalidade.id } } }
                 });
@@ -325,8 +325,8 @@ export class AuthService {
         const createdInscricoes = [];
 
         await (async () => {
-            for (const { aula, horario } of inscricoes) {
-                const prismaHorario = await this.prisma.horario.findUnique({ where: { time: horario } });
+            for (const { aula, horario, week_day } of inscricoes) {
+                const prismaHorario = await this.prisma.horario.findFirst({ where: { time: horario, day: week_day } });
 
                 if (!prismaHorario) throw new ForbiddenException("Don't exists this horario!");
 
@@ -350,7 +350,7 @@ export class AuthService {
         const inscricoes = await this.prisma.inscricao.findMany({ where: { OR: [{ alunoId: id }, { professorId: id }] } });
 
         await (async () => {
-            for (const { aula, time } of inscricoes) {
+            for (const { aula } of inscricoes) {
                 const modalidade = await this.prisma.modalidade.findUnique({ where: { name: aula } });
                 const alunosID = (await this.prisma.aluno.findMany({
                     where: { inscricoes: { some: { aula } }, accepted: !0 }

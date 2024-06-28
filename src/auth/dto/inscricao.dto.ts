@@ -1,4 +1,4 @@
-import { Aula } from "@prisma/client";
+import { Aula, Days } from "@prisma/client";
 import { IsDate, IsNotEmpty, IsString } from "class-validator";
 
 export class InscricaoDto {
@@ -9,4 +9,8 @@ export class InscricaoDto {
     @IsDate()
     @IsNotEmpty()
     horario: Date;
+
+    @IsString()
+    @IsNotEmpty()
+    week_day: Days;
 }

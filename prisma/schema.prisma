@@ -154,7 +154,7 @@ model Solic {
 
   adminId Int?
   doneAt  DateTime?
-  doneBy  Admin? @relation("owner", fields: [adminId], references: [id])
+  doneBy  Admin?    @relation("owner", fields: [adminId], references: [id])
 
   userId Int  @unique
   from   User @relation(fields: [userId], references: [id])
@@ -173,9 +173,10 @@ model Inscricao {
   professorId Int?
   professor   Professor? @relation("inscricoes_professor", fields: [professorId], references: [id])
 
-  aula    Aula
-  time    DateTime
-  horario Horario  @relation(fields: [time], references: [time])
+  aula      Aula
+
+  horarioId Int
+  horario   Horario @relation(fields: [horarioId], references: [id])
 }
 
 model Modalidade {
@@ -204,7 +205,8 @@ model Horario {
 
   inscricoes Inscricao[]
 
-  time    DateTime @unique
+  day     Days
+  time    DateTime
   periodo Periodo
 
   @@map("horarios")
@@ -229,6 +231,14 @@ model Notification {
 
   message   String
   createdAt DateTime @default(now())
+}
+
+enum Days {
+  SEGUNDA
+  TERCA
+  QUARTA
+  QUINTA
+  SEXTA
 }
 
 enum Status {

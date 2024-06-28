@@ -1,5 +1,5 @@
 import { IsNotEmpty, IsString } from "class-validator";
-import { Aluno, Professor, Admin, Role, Solic, Inscricao } from "@prisma/client";
+import { Aluno, Professor, Admin, Role, Solic } from "@prisma/client";
 import { InscricaoDto } from "./inscricao.dto";
 
 export class SignupDto {
