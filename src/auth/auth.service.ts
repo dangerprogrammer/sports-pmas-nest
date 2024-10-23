@@ -119,9 +119,9 @@ export class AuthService {
 
         await (async () => {
             for (let horario of horarios) await this.prisma.horario.upsert({
-                where: horario,
+                where: { day_time: `${horario.day} - ${horario.time}` },
                 update: { modalidades: { connect: modalidade } },
-                create: { ...horario, modalidades: { connect: modalidade } }
+                create: { ...horario, day_time: `${horario.day} - ${horario.time}`, modalidades: { connect: modalidade } }
             });
         })();
 
@@ -157,9 +157,9 @@ export class AuthService {
 
             for (let horario of update.horarios) {
                 await this.prisma.horario.upsert({
-                    where: { id: horario.id },
+                    where: { day_time: `${horario.day} - ${horario.time}` },
                     update: { modalidades: { set: { id: modalidade.id } } },
-                    create: { ...horario, modalidades: { connect: { id: modalidade.id } } }
+                    create: { ...horario, day_time: `${horario.day} - ${horario.time}`, modalidades: { connect: { id: modalidade.id } } }
                 });
             };
         })();
@@ -241,7 +241,7 @@ export class AuthService {
 
             if (user) {
                 const inscricoes = await this.prisma.inscricao.findMany({
-                    where: { OR: [ { alunoId: user.id }, { professorId: user.id } ] }
+                    where: { OR: [{ alunoId: user.id }, { professorId: user.id }] }
                 });
 
                 await (async () => {

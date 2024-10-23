@@ -69,6 +69,12 @@ export class SearchController {
         return this.search.searchHorariosSubscribe(modName, inscricoes);
     }
 
+    @Public()
+    @Get('horario/:id')
+    searchHorario(@Param('id') id: number) {
+        return this.search.searchHorario(+id);
+    }
+
     @Get('solic/:id')
     searchSolic(@Param('id') id: number) {
         return this.search.searchSolic(+id);

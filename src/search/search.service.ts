@@ -103,6 +103,12 @@ export class SearchService {
         }));
     }
 
+    async searchHorario(horarioId: number) {
+        const horario = await this.prisma.horario.findUnique({ where: { id: horarioId } });
+
+        return horario;
+    }
+
     async searchSolic(userId: number) {
         const solic = await this.prisma.solic.findUnique({ where: { userId } });
 

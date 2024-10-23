@@ -156,6 +156,7 @@ CREATE TABLE "horarios" (
     "id" SERIAL NOT NULL,
     "day" "Days" NOT NULL,
     "time" TIMESTAMP(3) NOT NULL,
+    "day_time" TEXT NOT NULL,
     "periodo" "Periodo" NOT NULL,
 
     CONSTRAINT "horarios_pkey" PRIMARY KEY ("id")
@@ -241,6 +242,9 @@ CREATE UNIQUE INDEX "solics_userId_key" ON "solics"("userId");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "modalidades_name_key" ON "modalidades"("name");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "horarios_day_time_key" ON "horarios"("day_time");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "localidades_endereco_key" ON "localidades"("endereco");

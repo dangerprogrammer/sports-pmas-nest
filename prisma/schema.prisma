@@ -173,7 +173,7 @@ model Inscricao {
   professorId Int?
   professor   Professor? @relation("inscricoes_professor", fields: [professorId], references: [id])
 
-  aula      Aula
+  aula Aula
 
   horarioId Int
   horario   Horario @relation(fields: [horarioId], references: [id])
@@ -205,9 +205,10 @@ model Horario {
 
   inscricoes Inscricao[]
 
-  day     Days
-  time    DateTime
-  periodo Periodo
+  day      Days
+  time     DateTime
+  day_time String   @unique
+  periodo  Periodo
 
   @@map("horarios")
 }
