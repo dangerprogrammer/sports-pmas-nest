@@ -132,6 +132,7 @@ CREATE TABLE "Inscricao" (
     "alunoId" INTEGER,
     "professorId" INTEGER,
     "aula" "Aula" NOT NULL,
+    "waiting" BOOLEAN NOT NULL DEFAULT false,
     "horarioId" INTEGER NOT NULL,
 
     CONSTRAINT "Inscricao_pkey" PRIMARY KEY ("id")
@@ -145,8 +146,7 @@ CREATE TABLE "modalidades" (
     "name" "Aula" NOT NULL,
     "endereco" TEXT NOT NULL DEFAULT 'Endereco...',
     "bairro" TEXT NOT NULL DEFAULT 'Bairro...',
-    "vagas" INTEGER DEFAULT 15,
-    "available" INTEGER NOT NULL DEFAULT 15,
+    "vagas" INTEGER NOT NULL DEFAULT 15,
 
     CONSTRAINT "modalidades_pkey" PRIMARY KEY ("id")
 );
@@ -158,6 +158,8 @@ CREATE TABLE "horarios" (
     "time" TIMESTAMP(3) NOT NULL,
     "day_time" TEXT NOT NULL,
     "periodo" "Periodo" NOT NULL,
+    "vagas" INTEGER NOT NULL,
+    "available" INTEGER NOT NULL,
 
     CONSTRAINT "horarios_pkey" PRIMARY KEY ("id")
 );
