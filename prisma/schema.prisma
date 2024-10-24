@@ -193,8 +193,8 @@ model Modalidade {
   bairro   String     @default("Bairro...")
   local    Localidade @relation("local_modalidade", fields: [endereco, bairro], references: [endereco, bairro])
 
-  vagas     Int? @default(15)
-  available Int  @default(15)
+  vagas     Int @default(15)
+  available Int @default(15)
 
   @@map("modalidades")
 }
@@ -209,6 +209,9 @@ model Horario {
   time     DateTime
   day_time String   @unique
   periodo  Periodo
+
+  vagas     Int
+  available Int
 
   @@map("horarios")
 }

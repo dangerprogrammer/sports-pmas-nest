@@ -120,8 +120,13 @@ export class AuthService {
         await (async () => {
             for (let horario of horarios) await this.prisma.horario.upsert({
                 where: { day_time: `${horario.day} - ${horario.time}` },
-                update: { modalidades: { connect: modalidade } },
-                create: { ...horario, day_time: `${horario.day} - ${horario.time}`, modalidades: { connect: modalidade } }
+                update: { modalidades: { connect: modalidade }, vagas: +vagas },
+                create: {
+                    ...horario,
+                    day_time: `${horario.day} - ${horario.time}`,
+                    modalidades: { connect: modalidade },
+                    vagas: +vagas, available: +vagas
+                }
             });
         })();
 
@@ -158,8 +163,15 @@ export class AuthService {
             for (let horario of update.horarios) {
                 await this.prisma.horario.upsert({
                     where: { day_time: `${horario.day} - ${horario.time}` },
-                    update: { modalidades: { set: { id: modalidade.id } } },
-                    create: { ...horario, day_time: `${horario.day} - ${horario.time}`, modalidades: { connect: { id: modalidade.id } } }
+                    update: {
+                        modalidades: { set: { id: modalidade.id } },
+                        ...(update.vagas && { vagas: +update.vagas }),
+                        ...(update.available && { available: +update.available })
+                    }, create: {
+                        ...horario,
+                        day_time: `${horario.day} - ${horario.time}`,
+                        modalidades: { connect: { id: modalidade.id } }
+                    }
                 });
             };
         })();
@@ -167,7 +179,10 @@ export class AuthService {
         if (update.local) {
             const local = await this.createLocal(update.local);
 
-            await this.prisma.modalidade.update({ where: { id: modalidade.id }, data: { local: { connect: { id: local.id } } } });
+            await this.prisma.modalidade.update({
+                where: { id: modalidade.id },
+                data: { local: { connect: { id: local.id } } }
+            });
         };
 
         if (update.vagas && !update.available) await this.prisma.modalidade.update({
@@ -195,7 +210,10 @@ export class AuthService {
         if (user.accepted) return !0;
 
         await this.updateSolic({ cpf, update: { done: !0, accepted } });
-        await this.prisma.solic.update({ where: { userId: user.id }, data: { doneAt: new Date(), doneBy: { connect: { id: sub } } } });
+        await this.prisma.solic.update({
+            where: { userId: user.id },
+            data: { doneAt: new Date(), doneBy: { connect: { id: sub } } }
+        });
 
         if (accepted) {
             const { roles } = await this.prisma.solic.findUnique({ where: { userId: user.id } });
@@ -347,7 +365,11 @@ export class AuthService {
     }
 
     async refreshModalidade(id: number) {
-        const inscricoes = await this.prisma.inscricao.findMany({ where: { OR: [{ alunoId: id }, { professorId: id }] } });
+        const inscricoes = await this.prisma.inscricao.findMany({
+            where: {
+                OR: [{ alunoId: id }, { professorId: id }]
+            }
+        });
 
         await (async () => {
             for (const { aula } of inscricoes) {
@@ -364,13 +386,24 @@ export class AuthService {
 
                 await this.prisma.modalidade.update({
                     where: { name: aula },
-                    data: { available: modalidade.vagas - alunosID.length, alunos: { set: alunosID }, professores: { set: professorsID } }
+                    data: {
+                        available: modalidade.vagas - alunosID.length,
+                        alunos: { set: alunosID },
+                        professores: { set: professorsID }
+                    }
                 });
             };
         })();
     }
 
-    async updateUserRoles(user: User, aluno: Aluno, professor: Professor, admin: Admin, solic: Solic, inscricoes: InscricaoDto[]) {
+    async updateUserRoles(
+        user: User,
+        aluno: Aluno,
+        professor: Professor,
+        admin: Admin,
+        solic: Solic,
+        inscricoes: InscricaoDto[]
+    ) {
         const { data, include }: { data: any, include: any } = { data: {}, include: {} };
 
         if (solic) {
