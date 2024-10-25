@@ -1,6 +1,6 @@
 import { IsNotEmpty, IsString } from "class-validator";
 import { LocalDto } from "./local.dto";
-import { Aula, Role } from "@prisma/client";
+import { Role } from "@prisma/client";
 import { ModalidadeDto } from "./modalidade.dto";
 import { SolicDto } from "./solic.dto";
 import { InscricaoDto } from "./inscricao.dto";
@@ -16,7 +16,7 @@ export class UpdateLocalDto {
 export class UpdateModalidadeDto {
     @IsString()
     @IsNotEmpty()
-    name: Aula;
+    name: string;
 
     @IsNotEmpty()
     update: Partial<ModalidadeDto>;

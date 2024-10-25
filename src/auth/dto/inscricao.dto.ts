@@ -1,10 +1,10 @@
-import { Aula, Days } from "@prisma/client";
+import { Days } from "@prisma/client";
 import { IsDate, IsNotEmpty, IsString } from "class-validator";
 
 export class InscricaoDto {
     @IsString()
     @IsNotEmpty()
-    aula: Aula;
+    aula: string;
 
     @IsDate()
     @IsNotEmpty()

@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import * as jwt from 'jsonwebtoken';
-import { $Enums, Inscricao, Role } from '@prisma/client';
+import { Inscricao, Role } from '@prisma/client';
 
 @Injectable()
 export class SearchService {
@@ -71,7 +71,7 @@ export class SearchService {
         return availableModalidades;
     }
 
-    async searchHorarios(name: $Enums.Aula) {
+    async searchHorarios(name: string) {
         const horariosFromMod = (await this.prisma.horario.findMany({
             where: {
                 modalidades: { some: { name } }
@@ -90,7 +90,7 @@ export class SearchService {
         return inscricoes;
     }
 
-    async searchHorariosSubscribe(name: $Enums.Aula, inscricoes: Inscricao[]) {
+    async searchHorariosSubscribe(name: string, inscricoes: Inscricao[]) {
         const horarios = await this.searchHorarios(name);
 
         return horarios.filter(({ time }) => inscricoes.find(async ({ horarioId }) => {

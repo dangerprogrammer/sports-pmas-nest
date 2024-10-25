@@ -8,9 +8,6 @@ CREATE TYPE "Status" AS ENUM ('ATIVO', 'INATIVO');
 CREATE TYPE "Periodo" AS ENUM ('MANHA', 'TARDE', 'NOITE');
 
 -- CreateEnum
-CREATE TYPE "Aula" AS ENUM ('NATACAO', 'HIDRO');
-
--- CreateEnum
 CREATE TYPE "Gender" AS ENUM ('FEMININO', 'MASCULINO', 'OUTRO');
 
 -- CreateEnum
@@ -131,7 +128,7 @@ CREATE TABLE "Inscricao" (
     "id" SERIAL NOT NULL,
     "alunoId" INTEGER,
     "professorId" INTEGER,
-    "aula" "Aula" NOT NULL,
+    "aula" TEXT NOT NULL,
     "waiting" BOOLEAN NOT NULL DEFAULT false,
     "horarioId" INTEGER NOT NULL,
 
@@ -143,7 +140,7 @@ CREATE TABLE "modalidades" (
     "id" SERIAL NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
-    "name" "Aula" NOT NULL,
+    "name" TEXT NOT NULL,
     "endereco" TEXT NOT NULL DEFAULT 'Endereco...',
     "bairro" TEXT NOT NULL DEFAULT 'Bairro...',
     "vagas" INTEGER NOT NULL DEFAULT 15,

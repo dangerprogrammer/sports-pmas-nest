@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Headers, Param, Post, Req } from '@nestjs/common';
+import { Body, Controller, Get, Headers, Param, Post } from '@nestjs/common';
 import { SearchService } from './search.service';
 import { Public } from 'src/common/decorators';
 import { $Enums, Inscricao, Role } from '@prisma/client';
@@ -53,7 +53,7 @@ export class SearchController {
 
     @Public()
     @Get('horarios/:modName')
-    searchHorarios(@Param('modName') modName: $Enums.Aula) {
+    searchHorarios(@Param('modName') modName: string) {
         return this.search.searchHorarios(modName);
     }
 
@@ -65,7 +65,7 @@ export class SearchController {
 
     @Public()
     @Post('horarios-subscribe/:modName')
-    searchHorariosSubscribe(@Body() inscricoes: Inscricao[], @Param('modName') modName: $Enums.Aula) {
+    searchHorariosSubscribe(@Body() inscricoes: Inscricao[], @Param('modName') modName: string) {
         return this.search.searchHorariosSubscribe(modName, inscricoes);
     }
 

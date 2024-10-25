@@ -173,7 +173,7 @@ model Inscricao {
   professorId Int?
   professor   Professor? @relation("inscricoes_professor", fields: [professorId], references: [id])
 
-  aula Aula
+  aula String
   
   waiting Boolean @default(false)
 
@@ -186,7 +186,7 @@ model Modalidade {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  name        Aula        @unique
+  name        String      @unique
   horarios    Horario[]   @relation("horario_modalidade")
   alunos      Aluno[]     @relation("aluno_modalidade")
   professores Professor[] @relation("professor_modalidade")
@@ -255,11 +255,6 @@ enum Periodo {
   MANHA
   TARDE
   NOITE
-}
-
-enum Aula {
-  NATACAO
-  HIDRO
 }
 
 enum Gender {

@@ -157,32 +157,32 @@ export class AuthService {
             disconnect: modalidadeHorarios
           }
         }
-      })
+      });
 
       for (let updateHorario of update.horarios) {
         const prismaHorario = await this.prisma.horario.findUnique({
           where: { day_time: `${updateHorario.day} - ${updateHorario.time}` }
         }), vagas = updateHorario.vagas || update.vagas;
 
-        await this.prisma.horario.upsert({
-          where: { day_time: `${updateHorario.day} - ${updateHorario.time}` },
-          update: {
-            modalidades: { set: { id: modalidade.id } },
-            ...(vagas && { vagas: +vagas }),
-            ...(updateHorario.available ?
-              { available: +updateHorario.available } :
-              vagas && (prismaHorario.available ? {
-                available: prismaHorario.available + (vagas - prismaHorario.vagas)
-              } : { available: +vagas })
-            )
-          },
-          create: {
-            ...updateHorario,
-            ...(vagas && { vagas: +vagas, available: +vagas }),
-            day_time: `${updateHorario.day} - ${updateHorario.time}`,
-            modalidades: { connect: { id: modalidade.id } }
-          }
-        });
+        if (prismaHorario) {
+          const inscricoesHorario = await this.prisma.inscricao.count({ where: { horarioId: prismaHorario.id } });
+
+          await this.prisma.horario.update({
+            where: { id: prismaHorario.id },
+            data: {
+              modalidades: { set: { id: modalidade.id } },
+              ...(vagas && { vagas: +vagas }),
+              ...(updateHorario.available ?
+                { available: +updateHorario.available } :
+                vagas && { available: +vagas - inscricoesHorario })
+            }
+          });
+        } else await this.prisma.horario.create({ data: {
+          ...updateHorario,
+          ...(vagas && { vagas: +vagas, available: +vagas }),
+          day_time: `${updateHorario.day} - ${updateHorario.time}`,
+          modalidades: { connect: { id: modalidade.id } }
+        } });
       };
     })();
 
@@ -399,6 +399,7 @@ export class AuthService {
           // AQUI IREI CRIAR A FILA DE ESPERA AOS ALUNOS!!
           const waitingAlunos = alunosID.filter((_, ind) => !(ind < horario.vagas));
 
+          console.log(waitingAlunos);
           await (async () => {
             for (const { id: alunoId } of waitingAlunos)
               await this.prisma.inscricao.update({
