@@ -15,6 +15,12 @@ export class SearchService {
         return user;
     }
 
+    async findMod(mod: string) {
+        const modalidade = await this.prisma.modalidade.findUnique({ where: { name: mod } });
+
+        return modalidade;
+    }
+
     async findUserById(id: number) {
         const user = await this.prisma.user.findUnique({ where: { id: +id } });
 

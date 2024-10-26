@@ -168,6 +168,7 @@ CREATE TABLE "localidades" (
     "updatedAt" TIMESTAMP(3) NOT NULL,
     "endereco" TEXT NOT NULL,
     "bairro" TEXT NOT NULL,
+    "full_location" TEXT NOT NULL,
 
     CONSTRAINT "localidades_pkey" PRIMARY KEY ("id")
 );
@@ -246,7 +247,7 @@ CREATE UNIQUE INDEX "modalidades_name_key" ON "modalidades"("name");
 CREATE UNIQUE INDEX "horarios_day_time_key" ON "horarios"("day_time");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "localidades_endereco_key" ON "localidades"("endereco");
+CREATE UNIQUE INDEX "localidades_full_location_key" ON "localidades"("full_location");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "localidades_endereco_bairro_key" ON "localidades"("endereco", "bairro");

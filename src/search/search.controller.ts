@@ -16,6 +16,12 @@ export class SearchController {
     }
 
     @Public()
+    @Get('modalidade/:mod')
+    findMod(@Param('mod') mod: string) {
+        return this.search.findMod(mod);
+    }
+
+    @Public()
     @Get('user/id/:id')
     findUserById(@Param('id') id: number) {
         return this.search.findUserById(id);

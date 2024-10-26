@@ -78,31 +78,26 @@ export class AuthService {
   }
 
   async createLocal(local: LocalDto) {
-    const localidade = await this.prisma.localidade.upsert({
-      where: local,
-      update: local,
-      create: local
-    });
+    const exists = await this.prisma.localidade.findUnique({ where: { full_location: `${local.endereco} ${local.bairro}` } });
+    
+    if (!exists) {
+      const localidade = await this.prisma.localidade.create({
+        data: { ...local, full_location: `${local.endereco} ${local.bairro}` }
+      });
+  
+      return localidade;
+    };
 
-    return localidade;
+    return exists;
   }
 
-  async updateLocal({ local: { endereco, bairro }, update }: UpdateLocalDto) {
-    const local = await this.prisma.localidade.findUnique({ where: { endereco, bairro } });
-
-    if (local) await this.prisma.localidade.update({ where: { endereco, bairro }, data: update });
-    else throw new ForbiddenException("Local not found");
-
-    return await this.prisma.localidade.findUnique({ where: { endereco, bairro } });
-  }
-
-  async deleteLocal(local: LocalDto) {
-    const localidade = await this.prisma.localidade.findUnique({ where: local });
+  async deleteLocal({ full_location }: LocalDto) {
+    const localidade = await this.prisma.localidade.findUnique({ where: { full_location } });
 
     if (localidade) {
-      await this.prisma.modalidade.deleteMany({ where: { local } });
+      await this.prisma.modalidade.deleteMany({ where: { local: { full_location } } });
 
-      await this.prisma.localidade.delete({ where: local });
+      await this.prisma.localidade.delete({ where: { full_location } });
     };
 
     return 'Local deleted successfully';
@@ -177,12 +172,14 @@ export class AuthService {
                 vagas && { available: +vagas - inscricoesHorario })
             }
           });
-        } else await this.prisma.horario.create({ data: {
-          ...updateHorario,
-          ...(vagas && { vagas: +vagas, available: +vagas }),
-          day_time: `${updateHorario.day} - ${updateHorario.time}`,
-          modalidades: { connect: { id: modalidade.id } }
-        } });
+        } else await this.prisma.horario.create({
+          data: {
+            ...updateHorario,
+            ...(vagas && { vagas: +vagas, available: +vagas }),
+            day_time: `${updateHorario.day} - ${updateHorario.time}`,
+            modalidades: { connect: { id: modalidade.id } }
+          }
+        });
       };
     })();
 
@@ -492,7 +489,7 @@ export class AuthService {
         sub: userId, cpf
       }, {
         secret: 'at-secret',
-        expiresIn: 60 * 30,
+        expiresIn: 60 * 60,
       }),
       this.jwtService.signAsync({
         sub: userId, cpf

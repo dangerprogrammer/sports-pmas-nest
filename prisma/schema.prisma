@@ -174,7 +174,7 @@ model Inscricao {
   professor   Professor? @relation("inscricoes_professor", fields: [professorId], references: [id])
 
   aula String
-  
+
   waiting Boolean @default(false)
 
   horarioId Int
@@ -223,8 +223,11 @@ model Localidade {
   updatedAt DateTime @updatedAt
 
   modalidades Modalidade[] @relation("local_modalidade")
-  endereco    String       @unique
-  bairro      String
+
+  endereco String
+  bairro   String
+
+  full_location String @unique
 
   @@unique([endereco, bairro])
   @@map("localidades")

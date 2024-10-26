@@ -43,13 +43,6 @@ export class AuthController {
     }
 
     @UseGuards(RoleGuard)
-    @Patch('update/local')
-    @HttpCode(HttpStatus.CREATED)
-    updateLocal(@Body() dto: UpdateLocalDto) {
-        return this.auth.updateLocal(dto);
-    }
-
-    @UseGuards(RoleGuard)
     @Delete('delete/local')
     @HttpCode(HttpStatus.ACCEPTED)
     deleteLocal(@Body() dto: LocalDto) {
@@ -71,8 +64,8 @@ export class AuthController {
     }
 
     @UseGuards(RoleGuard)
-    @Delete('delete/modalidade')
-    @HttpCode(HttpStatus.ACCEPTED)
+    @Post('delete/modalidade')
+    @HttpCode(HttpStatus.NO_CONTENT)
     deleteModalidade(@Body() dto: ModalidadeDto) {
         return this.auth.deleteModalidade(dto);
     }

@@ -8,4 +8,8 @@ export class LocalDto {
     @IsString()
     @IsNotEmpty()
     bairro: string;
+    
+    @IsString()
+    @IsNotEmpty()
+    full_location?: string;
 }
