@@ -79,12 +79,12 @@ export class AuthService {
 
   async createLocal(local: LocalDto) {
     const exists = await this.prisma.localidade.findUnique({ where: { full_location: `${local.endereco} ${local.bairro}` } });
-    
+
     if (!exists) {
       const localidade = await this.prisma.localidade.create({
         data: { ...local, full_location: `${local.endereco} ${local.bairro}` }
       });
-  
+
       return localidade;
     };
 
@@ -154,33 +154,56 @@ export class AuthService {
         }
       });
 
-      for (let updateHorario of update.horarios) {
-        const prismaHorario = await this.prisma.horario.findUnique({
-          where: { day_time: `${updateHorario.day} - ${updateHorario.time}` }
-        }), vagas = updateHorario.vagas || update.vagas;
+      await (async () => {
+        for (let updateHorario of update.horarios) {
+          const prismaHorario = await this.prisma.horario.findUnique({
+            where: { day_time: `${updateHorario.day} - ${updateHorario.time}` }
+          }), vagas = updateHorario.vagas || update.vagas;
 
-        if (prismaHorario) {
-          const inscricoesHorario = await this.prisma.inscricao.count({ where: { horarioId: prismaHorario.id } });
+          if (prismaHorario) {
+            const inscricoesHorario = await this.prisma.inscricao.findMany({ where: { horarioId: prismaHorario.id } });
 
-          await this.prisma.horario.update({
-            where: { id: prismaHorario.id },
+            await this.prisma.horario.update({
+              where: { id: prismaHorario.id },
+              data: {
+                modalidades: { set: { id: modalidade.id } },
+                ...(vagas && {
+                  vagas: +vagas,
+                  available: Math.max(0, +vagas - inscricoesHorario.length)
+                })
+              }
+            });
+
+            const horario = await this.prisma.horario.findUnique({ where: { id: prismaHorario.id } });
+
+            await (async () => {
+              for (const { aula, alunoId, id: inscricaoId } of inscricoesHorario) {
+                const alunos = await this.prisma.aluno.findMany({
+                  where: { inscricoes: { some: { aula } }, accepted: !0 }
+                });
+                const waiting = !(alunos.findIndex(({ id }) => id == alunoId) < horario.vagas);
+
+                await this.prisma.inscricao.update({
+                  where: { alunoId, id: inscricaoId },
+                  data: { waiting }
+                });
+
+                await this.prisma.horario.update({
+                  where: { id: horario.id },
+                  data: { available: Math.max(0, horario.vagas - alunos.length) }
+                })
+              };
+            })();
+          } else await this.prisma.horario.create({
             data: {
-              modalidades: { set: { id: modalidade.id } },
-              ...(vagas && { vagas: +vagas }),
-              ...(updateHorario.available ?
-                { available: +updateHorario.available } :
-                vagas && { available: +vagas - inscricoesHorario })
+              ...updateHorario,
+              ...(vagas && { vagas: +vagas, available: +vagas }),
+              day_time: `${updateHorario.day} - ${updateHorario.time}`,
+              modalidades: { connect: { id: modalidade.id } }
             }
           });
-        } else await this.prisma.horario.create({
-          data: {
-            ...updateHorario,
-            ...(vagas && { vagas: +vagas, available: +vagas }),
-            day_time: `${updateHorario.day} - ${updateHorario.time}`,
-            modalidades: { connect: { id: modalidade.id } }
-          }
-        });
-      };
+        };
+      })();
     })();
 
     if (update.local) {
@@ -376,9 +399,10 @@ export class AuthService {
     await (async () => {
       for (const { aula, horarioId, id: inscricaoId } of inscricoes) {
         const modalidade = await this.prisma.modalidade.findUnique({ where: { name: aula } });
-        const alunosID = (await this.prisma.aluno.findMany({
+        const alunos = await this.prisma.aluno.findMany({
           where: { inscricoes: { some: { aula } }, accepted: !0 }
-        })).map(({ id }) => { return { id } });
+        });
+        const alunosID = alunos.map(({ id }) => { return { id } });
         const professorsID = (await this.prisma.professor.findMany({
           where: { inscricoes: { some: { aula } }, accepted: !0 }
         })).map(({ id }) => { return { id } });
@@ -389,22 +413,19 @@ export class AuthService {
 
         await this.prisma.horario.update({
           where: { id: horarioId },
-          data: { available: Math.max(horario.vagas - alunosID.length, 0) }
+          data: { available: Math.max(horario.vagas - alunos.length, 0) }
         });
 
-        if (horario.vagas < alunosID.length) {
-          // AQUI IREI CRIAR A FILA DE ESPERA AOS ALUNOS!!
-          const waitingAlunos = alunosID.filter((_, ind) => !(ind < horario.vagas));
+        await (async () => {
+          for (const { id: alunoId } of alunos) {
+            const waiting = !(alunos.findIndex(({ id }) => id == alunoId) < horario.vagas);
 
-          console.log(waitingAlunos);
-          await (async () => {
-            for (const { id: alunoId } of waitingAlunos)
-              await this.prisma.inscricao.update({
-                where: { alunoId, id: inscricaoId },
-                data: { waiting: !0 }
-              });
-          })();
-        };
+            await this.prisma.inscricao.update({
+              where: { alunoId: { not: null }, id: inscricaoId },
+              data: { waiting }
+            });
+          };
+        })();
 
         await this.prisma.modalidade.update({
           where: { name: aula },
