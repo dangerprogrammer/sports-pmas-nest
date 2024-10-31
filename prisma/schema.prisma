@@ -242,11 +242,13 @@ model Notification {
 }
 
 enum Days {
+  DOMINGO
   SEGUNDA
   TERCA
   QUARTA
   QUINTA
   SEXTA
+  SABADO
 }
 
 enum Status {
